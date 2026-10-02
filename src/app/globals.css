@@ -1,0 +1,133 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  color-scheme: light;
+  --app-bg: #F4F3F1;
+  --surface: #FFFFFF;
+  --border-default: #E4E2DE;
+  --input-border: #D6D3CE;
+  --input-bg: #FAF9F8;
+  --text-primary: #1B1A19;
+  --text-secondary: #5F5B56;
+  --text-tertiary: #4A4743;
+  --sidebar-bg: #171817;
+  --sidebar-text: #CFCBC6;
+  --sidebar-active-bg: rgba(255, 255, 255, 0.08);
+  --sidebar-hover-bg: rgba(255, 255, 255, 0.06);
+  --sidebar-active-text: #FFFFFF;
+  --sidebar-active-icon: #FF3B42;
+  --primary: #D3000D;
+  --primary-foreground: #FFFFFF;
+  --dark-button: #1B1A19;
+  --dark-button-foreground: #FFFFFF;
+  --status-info-bg: #E6EEFB;
+  --status-info-text: #1A4FA8;
+  --status-warning-bg: #FFF4DE;
+  --status-warning-text: #8A5300;
+  --status-success-bg: #E3F3EA;
+  --status-success-text: #17633A;
+  --status-danger-bg: #FDE8E8;
+  --status-danger-text: #A3000A;
+  --status-neutral-bg: #EFEDEA;
+  --status-neutral-text: #4A4743;
+  --link: #1A4FA8;
+  --link-hover: #123A7D;
+  --control-radius: 8px;
+  --card-radius: 12px;
+  --badge-radius: 999px;
+
+  /* shadcn-compatible semantic tokens */
+  --background: var(--app-bg);
+  --foreground: var(--text-primary);
+  --card: var(--surface);
+  --card-foreground: var(--text-primary);
+  --popover: var(--surface);
+  --popover-foreground: var(--text-primary);
+  --secondary: var(--surface);
+  --secondary-foreground: var(--text-primary);
+  --muted: var(--status-neutral-bg);
+  --muted-foreground: var(--text-secondary);
+  --accent: var(--status-neutral-bg);
+  --accent-foreground: var(--text-primary);
+  --destructive: var(--status-danger-text);
+  --border: var(--border-default);
+  --input: var(--input-border);
+  --ring: var(--primary);
+  --radius: var(--control-radius);
+  --sidebar: var(--sidebar-bg);
+  --sidebar-foreground: var(--sidebar-text);
+  --sidebar-primary: var(--sidebar-active-icon);
+  --sidebar-primary-foreground: var(--sidebar-active-text);
+  --sidebar-accent: var(--sidebar-active-bg);
+  --sidebar-accent-foreground: var(--sidebar-active-text);
+  --sidebar-border: var(--sidebar-active-bg);
+  --sidebar-ring: var(--sidebar-active-icon);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-secondary: var(--secondary);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --radius-sm: var(--control-radius);
+  --radius-md: var(--control-radius);
+  --radius-lg: var(--control-radius);
+  --radius-xl: var(--card-radius);
+  --font-heading: var(--font-barlow-semi);
+  --color-app-bg: var(--app-bg);
+  --color-surface: var(--surface);
+  --color-border: var(--border-default);
+  --color-input-border: var(--input-border);
+  --color-input-bg: var(--input-bg);
+  --color-foreground: var(--text-primary);
+  --color-secondary-foreground: var(--text-secondary);
+  --color-tertiary-foreground: var(--text-tertiary);
+  --color-sidebar: var(--sidebar-bg);
+  --color-sidebar-foreground: var(--sidebar-text);
+  --color-sidebar-active: var(--sidebar-active-bg);
+  --color-sidebar-hover: var(--sidebar-hover-bg);
+  --color-sidebar-active-foreground: var(--sidebar-active-text);
+  --color-sidebar-active-icon: var(--sidebar-active-icon);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-dark-button: var(--dark-button);
+  --color-dark-button-foreground: var(--dark-button-foreground);
+  --color-status-info-bg: var(--status-info-bg);
+  --color-status-info-text: var(--status-info-text);
+  --color-status-warning-bg: var(--status-warning-bg);
+  --color-status-warning-text: var(--status-warning-text);
+  --color-status-success-bg: var(--status-success-bg);
+  --color-status-success-text: var(--status-success-text);
+  --color-status-danger-bg: var(--status-danger-bg);
+  --color-status-danger-text: var(--status-danger-text);
+  --color-status-neutral-bg: var(--status-neutral-bg);
+  --color-status-neutral-text: var(--status-neutral-text);
+  --color-link: var(--link);
+  --color-link-hover: var(--link-hover);
+  --radius-control: var(--control-radius);
+  --radius-card: var(--card-radius);
+  --radius-badge: var(--badge-radius);
+  --font-sans: var(--font-barlow);
+  --font-display: var(--font-barlow-semi);
+  --font-mono: var(--font-ibm-plex-mono);
+}
+
+html { font-size: 15px; }
+body { margin: 0; min-height: 100vh; background: var(--app-bg); color: var(--text-primary); font-family: var(--font-barlow), sans-serif; }
+button, input { font: inherit; }
+button { cursor: pointer; }
+input:-webkit-autofill { box-shadow: 0 0 0 1000px var(--input-bg) inset; -webkit-text-fill-color: var(--text-primary); }
+h1, h2 { font-family: var(--font-barlow-semi), sans-serif; font-weight: 700; line-height: 1.15; }
+h1 { font-size: 34px; }
+h2 { font-size: 22px; }
