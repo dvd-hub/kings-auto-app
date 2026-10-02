@@ -7,8 +7,8 @@ import { usePathname, useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuItem } from "@/components/ui/dropdown-menu";
-import { LayoutDashboard, Users, ClipboardList, Columns3, CalendarDays, Filter, Car, Receipt, Settings, Search, Menu, User, X, type LucideIcon } from "lucide-react";
-import { Input } from "@/components/ui/input";
+import { LayoutDashboard, Users, ClipboardList, Columns3, CalendarDays, Filter, Car, Receipt, Settings, Menu, User, X, type LucideIcon } from "lucide-react";
+import { CustomerSearch } from "@/components/customer-search";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle, SheetClose } from "@/components/ui/sheet";
 import { createClient } from "@/lib/supabase/client";
 
@@ -76,10 +76,8 @@ export function AppShell({ children, email }: { children: React.ReactNode; email
     <div className="min-w-0">
       <header className="flex min-h-[72px] items-center gap-3 border-b border-border bg-surface px-4 lg:px-8">
         <SheetTrigger asChild><Button type="button" variant="ghost" className="min-w-11 px-2 lg:hidden" aria-label={t("openMenu")}><Menu className="size-5" /></Button></SheetTrigger>
-        <div className="relative min-w-0 max-w-[440px] flex-1">
-          <Search className="pointer-events-none absolute top-1/2 left-3 h-5 w-5 -translate-y-1/2 text-secondary-foreground" />
-          <Input type="search" aria-label={t("search")} placeholder={t("searchPlaceholder")} className="pl-10" />
-        </div>
+        <CustomerSearch label={t("search")} placeholder={t("searchPlaceholder")} showCreate className="min-w-0 max-w-[440px] flex-1"
+          onSelect={(customer) => router.push(`/customers/${customer.id}`)} />
         <div className="ml-auto flex shrink-0 items-center gap-3">
           <div role="group" aria-label={t("language")} className="inline-flex overflow-hidden rounded-control border border-input-border bg-surface">
             <button type="button" onClick={() => changeLanguage("en")} aria-pressed={locale === "en"} className={`min-h-11 min-w-11 px-3 font-semibold ${locale === "en" ? "bg-dark-button text-dark-button-foreground" : "text-foreground hover:bg-app-bg"}`}>{t("languageEnglishShort")}</button>

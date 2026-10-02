@@ -21,3 +21,7 @@ export function formatPhone(e164: string): string {
 export function formatMiles(n: number): string {
   return `${new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 }).format(n)} mi`;
 }
+
+export function formatTime(date: Date | string | number, tz = SHOP_TIMEZONE): string {
+  return formatInTimeZone(date, tz, "h:mm a");
+}
