@@ -65,6 +65,18 @@ Mockups aprobados: dashboard, orden de reparación, tablero de producción y con
 - No hay registro público: los usuarios entran por invitación.
 - Páginas públicas (firma por enlace, galería de clásicos, formulario de leads): tokens firmados con caducidad y límite de peticiones.
 
+## Patrones establecidos (fases 1 y 2)
+
+- Escrituras con Server Actions (`"use server"`) que validan con los esquemas zod de `src/lib/validation.ts`. Lecturas en Server Components.
+- Tipos de la base de datos en `src/lib/database.types.ts`: los genera Claude desde Supabase después de cada migración. NO los edites a mano; si falta una columna, escribe `NO ENCONTRADO`.
+- Clientes de Supabase tipados con `Database` en `src/lib/supabase/`. Nunca envíes `shop_id` ni `created_by`: la base de datos los rellena.
+- Traducciones en el servidor con `getT()` de `src/i18n/server.ts`.
+- Fechas de formularios: interpretar en la hora del taller con `fromZonedTime(..., SHOP_TIMEZONE)`; mostrar con `formatInTimeZone`.
+- Eventos importantes (cita creada, reprogramada, cambio de estado) se registran en `activities` con `kind = 'system'`.
+- Errores de la base de datos se traducen a mensajes claros; `23505` (duplicado) se trata de forma específica.
+- Rutas de módulos propios fuera de `src/app/(app)/[section]`: al crear un módulo nuevo, quítalo de la lista de esa ruta.
+- Next.js 16: `src/proxy.ts` (no `middleware.ts`).
+
 <!-- BEGIN:nextjs-agent-rules -->
 
 # This is NOT the Next.js you know
