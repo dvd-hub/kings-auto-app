@@ -25,6 +25,7 @@ export type Database = {
           id: string
           kind: Database["public"]["Enums"]["activity_kind"]
           occurred_at: string
+          repair_order_id: string | null
           shop_id: string
           updated_at: string
           vehicle_id: string | null
@@ -39,6 +40,7 @@ export type Database = {
           id?: string
           kind: Database["public"]["Enums"]["activity_kind"]
           occurred_at?: string
+          repair_order_id?: string | null
           shop_id?: string
           updated_at?: string
           vehicle_id?: string | null
@@ -53,6 +55,7 @@ export type Database = {
           id?: string
           kind?: Database["public"]["Enums"]["activity_kind"]
           occurred_at?: string
+          repair_order_id?: string | null
           shop_id?: string
           updated_at?: string
           vehicle_id?: string | null
@@ -70,6 +73,13 @@ export type Database = {
             columns: ["customer_id", "shop_id"]
             isOneToOne: false
             referencedRelation: "customers"
+            referencedColumns: ["id", "shop_id"]
+          },
+          {
+            foreignKeyName: "activities_repair_order_id_shop_id_fkey"
+            columns: ["repair_order_id", "shop_id"]
+            isOneToOne: false
+            referencedRelation: "repair_orders"
             referencedColumns: ["id", "shop_id"]
           },
           {
@@ -97,6 +107,7 @@ export type Database = {
           ends_at: string
           id: string
           notes: string | null
+          repair_order_id: string | null
           shop_id: string
           starts_at: string
           status: Database["public"]["Enums"]["appointment_status"]
@@ -113,6 +124,7 @@ export type Database = {
           ends_at: string
           id?: string
           notes?: string | null
+          repair_order_id?: string | null
           shop_id?: string
           starts_at: string
           status?: Database["public"]["Enums"]["appointment_status"]
@@ -129,6 +141,7 @@ export type Database = {
           ends_at?: string
           id?: string
           notes?: string | null
+          repair_order_id?: string | null
           shop_id?: string
           starts_at?: string
           status?: Database["public"]["Enums"]["appointment_status"]
@@ -146,6 +159,13 @@ export type Database = {
             referencedColumns: ["id", "shop_id"]
           },
           {
+            foreignKeyName: "appointments_repair_order_id_shop_id_fkey"
+            columns: ["repair_order_id", "shop_id"]
+            isOneToOne: false
+            referencedRelation: "repair_orders"
+            referencedColumns: ["id", "shop_id"]
+          },
+          {
             foreignKeyName: "appointments_shop_id_fkey"
             columns: ["shop_id"]
             isOneToOne: false
@@ -157,6 +177,107 @@ export type Database = {
             columns: ["vehicle_id", "shop_id"]
             isOneToOne: false
             referencedRelation: "vehicles"
+            referencedColumns: ["id", "shop_id"]
+          },
+        ]
+      }
+      authorizations: {
+        Row: {
+          amount_cents: number
+          authorized_at: string
+          authorizer_name: string
+          by_designee: boolean
+          contact_email: string | null
+          contact_phone: string | null
+          content_sha256: string
+          created_at: string
+          created_by: string | null
+          decision: Database["public"]["Enums"]["authorization_decision"]
+          deleted_at: string | null
+          estimate_id: string
+          id: string
+          method: Database["public"]["Enums"]["authorization_method"]
+          phone_called: string | null
+          return_parts_requested: boolean
+          shop_id: string
+          signature_document_id: string | null
+          signer_ip: unknown
+          signer_user_agent: string | null
+          updated_at: string
+        }
+        Insert: {
+          amount_cents: number
+          authorized_at?: string
+          authorizer_name: string
+          by_designee?: boolean
+          contact_email?: string | null
+          contact_phone?: string | null
+          content_sha256: string
+          created_at?: string
+          created_by?: string | null
+          decision: Database["public"]["Enums"]["authorization_decision"]
+          deleted_at?: string | null
+          estimate_id: string
+          id?: string
+          method: Database["public"]["Enums"]["authorization_method"]
+          phone_called?: string | null
+          return_parts_requested?: boolean
+          shop_id?: string
+          signature_document_id?: string | null
+          signer_ip?: unknown
+          signer_user_agent?: string | null
+          updated_at?: string
+        }
+        Update: {
+          amount_cents?: number
+          authorized_at?: string
+          authorizer_name?: string
+          by_designee?: boolean
+          contact_email?: string | null
+          contact_phone?: string | null
+          content_sha256?: string
+          created_at?: string
+          created_by?: string | null
+          decision?: Database["public"]["Enums"]["authorization_decision"]
+          deleted_at?: string | null
+          estimate_id?: string
+          id?: string
+          method?: Database["public"]["Enums"]["authorization_method"]
+          phone_called?: string | null
+          return_parts_requested?: boolean
+          shop_id?: string
+          signature_document_id?: string | null
+          signer_ip?: unknown
+          signer_user_agent?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "authorizations_estimate_id_shop_id_fkey"
+            columns: ["estimate_id", "shop_id"]
+            isOneToOne: false
+            referencedRelation: "estimate_totals"
+            referencedColumns: ["estimate_id", "shop_id"]
+          },
+          {
+            foreignKeyName: "authorizations_estimate_id_shop_id_fkey"
+            columns: ["estimate_id", "shop_id"]
+            isOneToOne: false
+            referencedRelation: "estimates"
+            referencedColumns: ["id", "shop_id"]
+          },
+          {
+            foreignKeyName: "authorizations_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "authorizations_signature_document_id_shop_id_fkey"
+            columns: ["signature_document_id", "shop_id"]
+            isOneToOne: false
+            referencedRelation: "documents"
             referencedColumns: ["id", "shop_id"]
           },
         ]
@@ -244,6 +365,404 @@ export type Database = {
           },
         ]
       }
+      documents: {
+        Row: {
+          caption: string | null
+          created_at: string
+          created_by: string | null
+          customer_id: string | null
+          deleted_at: string | null
+          estimate_id: string | null
+          id: string
+          kind: Database["public"]["Enums"]["document_kind"]
+          mime_type: string
+          repair_order_id: string | null
+          sha256: string | null
+          shop_id: string
+          size_bytes: number | null
+          storage_path: string
+          taken_at: string | null
+          updated_at: string
+          vehicle_id: string | null
+        }
+        Insert: {
+          caption?: string | null
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string | null
+          deleted_at?: string | null
+          estimate_id?: string | null
+          id?: string
+          kind: Database["public"]["Enums"]["document_kind"]
+          mime_type: string
+          repair_order_id?: string | null
+          sha256?: string | null
+          shop_id?: string
+          size_bytes?: number | null
+          storage_path: string
+          taken_at?: string | null
+          updated_at?: string
+          vehicle_id?: string | null
+        }
+        Update: {
+          caption?: string | null
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string | null
+          deleted_at?: string | null
+          estimate_id?: string | null
+          id?: string
+          kind?: Database["public"]["Enums"]["document_kind"]
+          mime_type?: string
+          repair_order_id?: string | null
+          sha256?: string | null
+          shop_id?: string
+          size_bytes?: number | null
+          storage_path?: string
+          taken_at?: string | null
+          updated_at?: string
+          vehicle_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "documents_customer_id_shop_id_fkey"
+            columns: ["customer_id", "shop_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id", "shop_id"]
+          },
+          {
+            foreignKeyName: "documents_estimate_id_shop_id_fkey"
+            columns: ["estimate_id", "shop_id"]
+            isOneToOne: false
+            referencedRelation: "estimate_totals"
+            referencedColumns: ["estimate_id", "shop_id"]
+          },
+          {
+            foreignKeyName: "documents_estimate_id_shop_id_fkey"
+            columns: ["estimate_id", "shop_id"]
+            isOneToOne: false
+            referencedRelation: "estimates"
+            referencedColumns: ["id", "shop_id"]
+          },
+          {
+            foreignKeyName: "documents_repair_order_id_shop_id_fkey"
+            columns: ["repair_order_id", "shop_id"]
+            isOneToOne: false
+            referencedRelation: "repair_orders"
+            referencedColumns: ["id", "shop_id"]
+          },
+          {
+            foreignKeyName: "documents_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "documents_vehicle_id_shop_id_fkey"
+            columns: ["vehicle_id", "shop_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id", "shop_id"]
+          },
+        ]
+      }
+      estimate_lines: {
+        Row: {
+          amount_cents: number | null
+          brand: string | null
+          crash_part_origin:
+            | Database["public"]["Enums"]["crash_part_origin"]
+            | null
+          created_at: string
+          created_by: string | null
+          deleted_at: string | null
+          description: string
+          estimate_id: string
+          id: string
+          is_crash_part: boolean | null
+          labor_type: Database["public"]["Enums"]["labor_type"] | null
+          line_type: Database["public"]["Enums"]["estimate_line_type"]
+          non_returnable: boolean | null
+          paint_materials_method:
+            | Database["public"]["Enums"]["paint_materials_method"]
+            | null
+          part_condition: Database["public"]["Enums"]["part_condition"] | null
+          part_number: string | null
+          position: number
+          quantity: number
+          shop_id: string
+          sublet_vendor_address: string | null
+          sublet_vendor_name: string | null
+          taxable: boolean
+          teardown_role: Database["public"]["Enums"]["teardown_role"] | null
+          unit_price_cents: number
+          updated_at: string
+        }
+        Insert: {
+          amount_cents?: number | null
+          brand?: string | null
+          crash_part_origin?:
+            | Database["public"]["Enums"]["crash_part_origin"]
+            | null
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          description: string
+          estimate_id: string
+          id?: string
+          is_crash_part?: boolean | null
+          labor_type?: Database["public"]["Enums"]["labor_type"] | null
+          line_type: Database["public"]["Enums"]["estimate_line_type"]
+          non_returnable?: boolean | null
+          paint_materials_method?:
+            | Database["public"]["Enums"]["paint_materials_method"]
+            | null
+          part_condition?: Database["public"]["Enums"]["part_condition"] | null
+          part_number?: string | null
+          position: number
+          quantity?: number
+          shop_id?: string
+          sublet_vendor_address?: string | null
+          sublet_vendor_name?: string | null
+          taxable?: boolean
+          teardown_role?: Database["public"]["Enums"]["teardown_role"] | null
+          unit_price_cents: number
+          updated_at?: string
+        }
+        Update: {
+          amount_cents?: number | null
+          brand?: string | null
+          crash_part_origin?:
+            | Database["public"]["Enums"]["crash_part_origin"]
+            | null
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          description?: string
+          estimate_id?: string
+          id?: string
+          is_crash_part?: boolean | null
+          labor_type?: Database["public"]["Enums"]["labor_type"] | null
+          line_type?: Database["public"]["Enums"]["estimate_line_type"]
+          non_returnable?: boolean | null
+          paint_materials_method?:
+            | Database["public"]["Enums"]["paint_materials_method"]
+            | null
+          part_condition?: Database["public"]["Enums"]["part_condition"] | null
+          part_number?: string | null
+          position?: number
+          quantity?: number
+          shop_id?: string
+          sublet_vendor_address?: string | null
+          sublet_vendor_name?: string | null
+          taxable?: boolean
+          teardown_role?: Database["public"]["Enums"]["teardown_role"] | null
+          unit_price_cents?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "estimate_lines_estimate_id_shop_id_fkey"
+            columns: ["estimate_id", "shop_id"]
+            isOneToOne: false
+            referencedRelation: "estimate_totals"
+            referencedColumns: ["estimate_id", "shop_id"]
+          },
+          {
+            foreignKeyName: "estimate_lines_estimate_id_shop_id_fkey"
+            columns: ["estimate_id", "shop_id"]
+            isOneToOne: false
+            referencedRelation: "estimates"
+            referencedColumns: ["id", "shop_id"]
+          },
+          {
+            foreignKeyName: "estimate_lines_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      estimates: {
+        Row: {
+          basis: Database["public"]["Enums"]["estimate_basis"]
+          created_at: string
+          created_by: string | null
+          deleted_at: string | null
+          id: string
+          kind: Database["public"]["Enums"]["estimate_kind"]
+          locked_at: string | null
+          notes: string | null
+          parent_estimate_id: string | null
+          payor_approved_amount_cents: number | null
+          payor_claim_number: string | null
+          payor_estimate_document_id: string | null
+          payor_estimate_total_cents: number | null
+          payor_name: string | null
+          payor_notified_at: string | null
+          pdf_document_id: string | null
+          pdf_sha256: string | null
+          pickup_deadline_days: number | null
+          reassembly_max_days: number | null
+          repair_order_id: string
+          sent_at: string | null
+          seq: number
+          shop_id: string
+          status: Database["public"]["Enums"]["estimate_status"]
+          teardown_area: string | null
+          teardown_may_prevent_restoration: boolean | null
+          updated_at: string
+        }
+        Insert: {
+          basis?: Database["public"]["Enums"]["estimate_basis"]
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          id?: string
+          kind: Database["public"]["Enums"]["estimate_kind"]
+          locked_at?: string | null
+          notes?: string | null
+          parent_estimate_id?: string | null
+          payor_approved_amount_cents?: number | null
+          payor_claim_number?: string | null
+          payor_estimate_document_id?: string | null
+          payor_estimate_total_cents?: number | null
+          payor_name?: string | null
+          payor_notified_at?: string | null
+          pdf_document_id?: string | null
+          pdf_sha256?: string | null
+          pickup_deadline_days?: number | null
+          reassembly_max_days?: number | null
+          repair_order_id: string
+          sent_at?: string | null
+          seq: number
+          shop_id?: string
+          status?: Database["public"]["Enums"]["estimate_status"]
+          teardown_area?: string | null
+          teardown_may_prevent_restoration?: boolean | null
+          updated_at?: string
+        }
+        Update: {
+          basis?: Database["public"]["Enums"]["estimate_basis"]
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          id?: string
+          kind?: Database["public"]["Enums"]["estimate_kind"]
+          locked_at?: string | null
+          notes?: string | null
+          parent_estimate_id?: string | null
+          payor_approved_amount_cents?: number | null
+          payor_claim_number?: string | null
+          payor_estimate_document_id?: string | null
+          payor_estimate_total_cents?: number | null
+          payor_name?: string | null
+          payor_notified_at?: string | null
+          pdf_document_id?: string | null
+          pdf_sha256?: string | null
+          pickup_deadline_days?: number | null
+          reassembly_max_days?: number | null
+          repair_order_id?: string
+          sent_at?: string | null
+          seq?: number
+          shop_id?: string
+          status?: Database["public"]["Enums"]["estimate_status"]
+          teardown_area?: string | null
+          teardown_may_prevent_restoration?: boolean | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "estimates_parent_estimate_id_shop_id_fkey"
+            columns: ["parent_estimate_id", "shop_id"]
+            isOneToOne: false
+            referencedRelation: "estimate_totals"
+            referencedColumns: ["estimate_id", "shop_id"]
+          },
+          {
+            foreignKeyName: "estimates_parent_estimate_id_shop_id_fkey"
+            columns: ["parent_estimate_id", "shop_id"]
+            isOneToOne: false
+            referencedRelation: "estimates"
+            referencedColumns: ["id", "shop_id"]
+          },
+          {
+            foreignKeyName: "estimates_payor_estimate_document_id_shop_id_fkey"
+            columns: ["payor_estimate_document_id", "shop_id"]
+            isOneToOne: false
+            referencedRelation: "documents"
+            referencedColumns: ["id", "shop_id"]
+          },
+          {
+            foreignKeyName: "estimates_pdf_document_id_shop_id_fkey"
+            columns: ["pdf_document_id", "shop_id"]
+            isOneToOne: false
+            referencedRelation: "documents"
+            referencedColumns: ["id", "shop_id"]
+          },
+          {
+            foreignKeyName: "estimates_repair_order_id_shop_id_fkey"
+            columns: ["repair_order_id", "shop_id"]
+            isOneToOne: false
+            referencedRelation: "repair_orders"
+            referencedColumns: ["id", "shop_id"]
+          },
+          {
+            foreignKeyName: "estimates_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      labor_rates: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          deleted_at: string | null
+          effective_from: string
+          id: string
+          kind: Database["public"]["Enums"]["rate_kind"]
+          rate_cents: number
+          shop_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          effective_from?: string
+          id?: string
+          kind: Database["public"]["Enums"]["rate_kind"]
+          rate_cents: number
+          shop_id?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          effective_from?: string
+          id?: string
+          kind?: Database["public"]["Enums"]["rate_kind"]
+          rate_cents?: number
+          shop_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "labor_rates_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string
@@ -288,6 +807,197 @@ export type Database = {
           },
         ]
       }
+      repair_orders: {
+        Row: {
+          arrival_circumstance: Database["public"]["Enums"]["arrival_circumstance"]
+          completed_at: string | null
+          created_at: string
+          created_by: string | null
+          customer_id: string
+          deleted_at: string | null
+          delivered_at: string | null
+          designee_email: string | null
+          designee_name: string | null
+          designee_phone: string | null
+          designee_signature_document_id: string | null
+          designee_signed_at: string | null
+          id: string
+          notes: string | null
+          odometer_in: number
+          odometer_out: number | null
+          promised_at: string | null
+          ready_for_pickup_notified_at: string | null
+          received_at: string
+          requested_repairs: string
+          ro_number: number
+          shop_id: string
+          status: Database["public"]["Enums"]["ro_status"]
+          teardown_outcome:
+            | Database["public"]["Enums"]["teardown_outcome"]
+            | null
+          teardown_outcome_at: string | null
+          total_loss_at: string | null
+          type: Database["public"]["Enums"]["ro_type"]
+          updated_at: string
+          vehicle_id: string
+        }
+        Insert: {
+          arrival_circumstance?: Database["public"]["Enums"]["arrival_circumstance"]
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          customer_id: string
+          deleted_at?: string | null
+          delivered_at?: string | null
+          designee_email?: string | null
+          designee_name?: string | null
+          designee_phone?: string | null
+          designee_signature_document_id?: string | null
+          designee_signed_at?: string | null
+          id?: string
+          notes?: string | null
+          odometer_in: number
+          odometer_out?: number | null
+          promised_at?: string | null
+          ready_for_pickup_notified_at?: string | null
+          received_at?: string
+          requested_repairs: string
+          ro_number: number
+          shop_id?: string
+          status?: Database["public"]["Enums"]["ro_status"]
+          teardown_outcome?:
+            | Database["public"]["Enums"]["teardown_outcome"]
+            | null
+          teardown_outcome_at?: string | null
+          total_loss_at?: string | null
+          type?: Database["public"]["Enums"]["ro_type"]
+          updated_at?: string
+          vehicle_id: string
+        }
+        Update: {
+          arrival_circumstance?: Database["public"]["Enums"]["arrival_circumstance"]
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string
+          deleted_at?: string | null
+          delivered_at?: string | null
+          designee_email?: string | null
+          designee_name?: string | null
+          designee_phone?: string | null
+          designee_signature_document_id?: string | null
+          designee_signed_at?: string | null
+          id?: string
+          notes?: string | null
+          odometer_in?: number
+          odometer_out?: number | null
+          promised_at?: string | null
+          ready_for_pickup_notified_at?: string | null
+          received_at?: string
+          requested_repairs?: string
+          ro_number?: number
+          shop_id?: string
+          status?: Database["public"]["Enums"]["ro_status"]
+          teardown_outcome?:
+            | Database["public"]["Enums"]["teardown_outcome"]
+            | null
+          teardown_outcome_at?: string | null
+          total_loss_at?: string | null
+          type?: Database["public"]["Enums"]["ro_type"]
+          updated_at?: string
+          vehicle_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "repair_orders_customer_id_shop_id_fkey"
+            columns: ["customer_id", "shop_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id", "shop_id"]
+          },
+          {
+            foreignKeyName: "repair_orders_designee_signature_document_id_shop_id_fkey"
+            columns: ["designee_signature_document_id", "shop_id"]
+            isOneToOne: false
+            referencedRelation: "documents"
+            referencedColumns: ["id", "shop_id"]
+          },
+          {
+            foreignKeyName: "repair_orders_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "repair_orders_vehicle_id_shop_id_fkey"
+            columns: ["vehicle_id", "shop_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id", "shop_id"]
+          },
+        ]
+      }
+      ro_phases: {
+        Row: {
+          budget_cents: number | null
+          created_at: string
+          created_by: string | null
+          deleted_at: string | null
+          id: string
+          name: string
+          notes: string | null
+          position: number
+          repair_order_id: string
+          shop_id: string
+          status: Database["public"]["Enums"]["phase_status"]
+          updated_at: string
+        }
+        Insert: {
+          budget_cents?: number | null
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          id?: string
+          name: string
+          notes?: string | null
+          position: number
+          repair_order_id: string
+          shop_id?: string
+          status?: Database["public"]["Enums"]["phase_status"]
+          updated_at?: string
+        }
+        Update: {
+          budget_cents?: number | null
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          id?: string
+          name?: string
+          notes?: string | null
+          position?: number
+          repair_order_id?: string
+          shop_id?: string
+          status?: Database["public"]["Enums"]["phase_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ro_phases_repair_order_id_shop_id_fkey"
+            columns: ["repair_order_id", "shop_id"]
+            isOneToOne: false
+            referencedRelation: "repair_orders"
+            referencedColumns: ["id", "shop_id"]
+          },
+          {
+            foreignKeyName: "ro_phases_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       shop_counters: {
         Row: {
           kind: string
@@ -323,6 +1033,7 @@ export type Database = {
           created_at: string
           deleted_at: string | null
           email: string | null
+          epa_id_number: string | null
           id: string
           legal_name: string | null
           legal_texts: Json
@@ -345,6 +1056,7 @@ export type Database = {
           created_at?: string
           deleted_at?: string | null
           email?: string | null
+          epa_id_number?: string | null
           id?: string
           legal_name?: string | null
           legal_texts?: Json
@@ -367,6 +1079,7 @@ export type Database = {
           created_at?: string
           deleted_at?: string | null
           email?: string | null
+          epa_id_number?: string | null
           id?: string
           legal_name?: string | null
           legal_texts?: Json
@@ -460,7 +1173,35 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      estimate_totals: {
+        Row: {
+          estimate_id: string | null
+          hazardous_waste_cents: number | null
+          labor_cents: number | null
+          materials_cents: number | null
+          parts_cents: number | null
+          repair_order_id: string | null
+          shop_id: string | null
+          sublet_cents: number | null
+          total_cents: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "estimates_repair_order_id_shop_id_fkey"
+            columns: ["repair_order_id", "shop_id"]
+            isOneToOne: false
+            referencedRelation: "repair_orders"
+            referencedColumns: ["id", "shop_id"]
+          },
+          {
+            foreignKeyName: "estimates_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       current_shop_id: { Args: never; Returns: string }
@@ -514,6 +1255,13 @@ export type Database = {
         | "delivery"
         | "pickup"
         | "other"
+      arrival_circumstance:
+        | "customer_present"
+        | "after_hours_drop_off"
+        | "towed_in"
+      authorization_decision: "approved" | "declined"
+      authorization_method: "written" | "oral" | "electronic"
+      crash_part_origin: "oem" | "non_oem_aftermarket"
       customer_source:
         | "walk_in"
         | "phone"
@@ -526,6 +1274,44 @@ export type Database = {
         | "repeat"
         | "other"
       customer_type: "individual" | "business"
+      document_kind:
+        | "photo"
+        | "estimate_pdf"
+        | "third_party_estimate"
+        | "signature"
+        | "authorization_proof"
+        | "other"
+      estimate_basis: "shop" | "third_party"
+      estimate_kind: "teardown" | "repair" | "supplement"
+      estimate_line_type:
+        | "part"
+        | "labor"
+        | "paint_materials"
+        | "materials"
+        | "sublet"
+        | "hazardous_waste"
+      estimate_status: "draft" | "sent" | "authorized" | "declined" | "voided"
+      labor_type: "body" | "paint" | "mechanical" | "frame" | "other"
+      paint_materials_method: "hourly_rate" | "actual_cost"
+      part_condition: "new" | "used" | "rebuilt" | "reconditioned"
+      phase_status: "pending" | "in_progress" | "done"
+      rate_kind:
+        | "body"
+        | "paint"
+        | "mechanical"
+        | "frame"
+        | "other"
+        | "paint_materials"
+      ro_status:
+        | "open"
+        | "in_progress"
+        | "completed"
+        | "delivered"
+        | "cancelled"
+        | "total_loss"
+      ro_type: "standard" | "classic"
+      teardown_outcome: "repair" | "reassemble" | "declined_reassembly"
+      teardown_role: "teardown" | "reassembly" | "destroyed_item"
       user_role: "owner"
     }
     CompositeTypes: {
@@ -664,6 +1450,14 @@ export const Constants = {
       ],
       appointment_status: ["scheduled", "completed", "no_show", "cancelled"],
       appointment_type: ["estimate", "drop_off", "delivery", "pickup", "other"],
+      arrival_circumstance: [
+        "customer_present",
+        "after_hours_drop_off",
+        "towed_in",
+      ],
+      authorization_decision: ["approved", "declined"],
+      authorization_method: ["written", "oral", "electronic"],
+      crash_part_origin: ["oem", "non_oem_aftermarket"],
       customer_source: [
         "walk_in",
         "phone",
@@ -677,6 +1471,48 @@ export const Constants = {
         "other",
       ],
       customer_type: ["individual", "business"],
+      document_kind: [
+        "photo",
+        "estimate_pdf",
+        "third_party_estimate",
+        "signature",
+        "authorization_proof",
+        "other",
+      ],
+      estimate_basis: ["shop", "third_party"],
+      estimate_kind: ["teardown", "repair", "supplement"],
+      estimate_line_type: [
+        "part",
+        "labor",
+        "paint_materials",
+        "materials",
+        "sublet",
+        "hazardous_waste",
+      ],
+      estimate_status: ["draft", "sent", "authorized", "declined", "voided"],
+      labor_type: ["body", "paint", "mechanical", "frame", "other"],
+      paint_materials_method: ["hourly_rate", "actual_cost"],
+      part_condition: ["new", "used", "rebuilt", "reconditioned"],
+      phase_status: ["pending", "in_progress", "done"],
+      rate_kind: [
+        "body",
+        "paint",
+        "mechanical",
+        "frame",
+        "other",
+        "paint_materials",
+      ],
+      ro_status: [
+        "open",
+        "in_progress",
+        "completed",
+        "delivered",
+        "cancelled",
+        "total_loss",
+      ],
+      ro_type: ["standard", "classic"],
+      teardown_outcome: ["repair", "reassemble", "declined_reassembly"],
+      teardown_role: ["teardown", "reassembly", "destroyed_item"],
       user_role: ["owner"],
     },
   },
