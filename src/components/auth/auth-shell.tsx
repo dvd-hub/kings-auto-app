@@ -11,7 +11,7 @@ export function AuthShell({ title, description, children }: { title: string; des
     <main className="flex min-h-screen items-center justify-center bg-sidebar px-4 py-12">
       <div className="w-full max-w-[440px]">
         <Link href="/login" className="mx-auto mb-8 flex min-h-11 w-fit items-center" aria-label={t("brand")}>
-          <Image src="/logo.png" alt={t("logoAlt")} width={184} height={44} className="h-auto w-[184px]" priority />
+          <Image src="/brand/kings-logo-light.svg" alt={t("logoAlt")} width={184} height={42} className="h-auto w-[184px]" priority />
         </Link>
         <Card className="block gap-0 overflow-visible border border-border p-8 text-[15px] shadow-sm ring-0 max-sm:p-6">
           <h1 className="text-foreground">{title}</h1>

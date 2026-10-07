@@ -47,7 +47,7 @@ export function AppShell({ children, email }: { children: React.ReactNode; email
   const navigation = <div className="flex h-full flex-col bg-sidebar text-sidebar-foreground">
     <div className="flex min-h-[112px] items-center px-6">
       <Link href="/" onClick={() => setOpen(false)} className="inline-flex min-h-11 items-center" aria-label={c("brand")}>
-        <Image src="/logo.png" alt={c("logoAlt")} width={184} height={44} className="h-auto w-[184px]" priority />
+        <Image src="/brand/kings-logo-light.svg" alt={c("logoAlt")} width={184} height={42} className="h-auto w-[184px]" priority />
       </Link>
     </div>
     <nav className="flex-1 space-y-1 px-3" aria-label={t("main")}>
