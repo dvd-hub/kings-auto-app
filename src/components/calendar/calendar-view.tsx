@@ -21,6 +21,7 @@ import { cn } from "@/lib/utils";
 export type CalendarViewName = "day" | "week" | "month";
 export type CalendarAppointment = {
   id: string; type: Database["public"]["Enums"]["appointment_type"]; status: Database["public"]["Enums"]["appointment_status"];
+  source: Database["public"]["Tables"]["appointments"]["Row"]["source"];
   title: string | null; notes: string | null; startsAt: string; endsAt: string;
   day: string; startMin: number; endMin: number;
   customerId: string | null; customerName: string | null; vehicleLabel: string | null; vehicleId: string | null;
@@ -87,7 +88,7 @@ export function CalendarView(props: {
     const cancelled = a.status === "cancelled";
     const who = a.customerName ?? a.title;
     return <button key={a.id} type="button" onClick={() => setSelected(a)} style={style}
-      className={cn("overflow-hidden rounded-control border-l-4 px-2 py-1 text-left text-sm leading-tight", appointmentBlockClass[appointmentTypeVariant(a.type, a.status)], cancelled && "line-through", extra)}>
+      className={cn("overflow-hidden rounded-control border-l-4 px-2 py-1 text-left text-sm leading-tight", appointmentBlockClass[appointmentTypeVariant(a.type, a.status)], a.status === "requested" && "border-dashed", cancelled && "line-through", extra)}>
       <span className={cn(compact && "block truncate")}><span className="font-semibold">{ty(a.type)}</span> <span>{formatTime(a.startsAt)}</span>{compact && who && <span> · {who}</span>}</span>
       {!compact && who && <span className="block truncate">{who}</span>}
     </button>;
@@ -193,7 +194,7 @@ function AppointmentDetail({ appointment: a, onClose, onEdit }: { appointment: C
   const router = useRouter();
   const [pending, start] = useTransition();
 
-  function setStatus(status: "completed" | "no_show" | "cancelled") {
+  function setStatus(status: "scheduled" | "completed" | "no_show" | "cancelled") {
     if (!a) return;
     start(async () => {
       const result = await setAppointmentStatus({ id: a.id, status });
@@ -213,11 +214,17 @@ function AppointmentDetail({ appointment: a, onClose, onEdit }: { appointment: C
           <div className="flex flex-wrap gap-2">
             <StatusBadge variant={appointmentTypeVariant(a.type, a.status)} label={ty(a.type)} />
             <StatusBadge variant={appointmentStatusVariant(a.status)} label={st(a.status)} />
+            {a.source === "web" && <StatusBadge variant="neutral" label={t("sourceWeb")} />}
           </div>
           <p className={cn("font-semibold", a.status === "cancelled" && "line-through text-secondary-foreground")}>{formatDateTime(a.startsAt)} – {formatTime(a.endsAt)}</p>
           {a.customerName && <p>{t("customer")}: <Link href={`/customers/${a.customerId}`} className="inline-flex min-h-11 items-center font-semibold text-link underline hover:text-link-hover">{a.customerName}</Link></p>}
           {a.vehicleLabel && <p>{t("vehicle")}: {a.vehicleLabel}</p>}
           {a.notes && <p className="whitespace-pre-wrap break-words text-secondary-foreground">{a.notes}</p>}
+          {a.status === "requested" && <div className="flex flex-wrap gap-2 pt-2">
+            <Button type="button" variant="outline" disabled={pending} onClick={() => onEdit(a)}><Pencil className="size-4" />{t("edit")}</Button>
+            <Button type="button" variant="outline" disabled={pending} onClick={() => setStatus("scheduled")}>{t("confirm")}</Button>
+            <Button type="button" variant="destructive" disabled={pending} onClick={() => setStatus("cancelled")}>{t("markCancelled")}</Button>
+          </div>}
           {a.status === "scheduled" && <div className="flex flex-wrap gap-2 pt-2">
             <Button type="button" variant="outline" disabled={pending} onClick={() => onEdit(a)}><Pencil className="size-4" />{t("edit")}</Button>
             <Button type="button" variant="outline" disabled={pending} onClick={() => setStatus("completed")}>{t("markCompleted")}</Button>

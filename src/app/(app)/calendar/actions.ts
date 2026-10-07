@@ -65,15 +65,18 @@ export async function createAppointment(input: unknown): Promise<AppointmentResu
 
 const statusSchema = z.object({
   id: z.uuid(),
-  status: z.enum(["completed", "no_show", "cancelled"]),
+  status: z.enum(["scheduled", "completed", "no_show", "cancelled"]),
 });
 
 export async function setAppointmentStatus(input: unknown): Promise<AppointmentResult> {
   const parsed = statusSchema.safeParse(input);
   if (!parsed.success) return { ok: false, error: "save" };
   const supabase = await createClient();
-  const { data: row, error } = await supabase.from("appointments").update({ status: parsed.data.status })
-    .eq("id", parsed.data.id).is("deleted_at", null).select("id, customer_id, vehicle_id").single();
+  let query = supabase.from("appointments").update({ status: parsed.data.status })
+    .eq("id", parsed.data.id).is("deleted_at", null);
+  // Check the current status in the update itself so a concurrent change cannot confirm it twice.
+  if (parsed.data.status === "scheduled") query = query.eq("status", "requested");
+  const { data: row, error } = await query.select("id, customer_id, vehicle_id").single();
   if (error || !row) return { ok: false, error: "save" };
 
   if (row.customer_id) {
@@ -97,12 +100,12 @@ export async function updateAppointment(id: string, input: unknown): Promise<App
   const { data: current } = await supabase.from("appointments").select("id, status, starts_at, customer_id")
     .eq("id", id).is("deleted_at", null).maybeSingle();
   if (!current) return { ok: false, error: "notFound" };
-  if (current.status !== "scheduled") return { ok: false, error: "notEditable" };
+  if (current.status !== "scheduled" && current.status !== "requested") return { ok: false, error: "notEditable" };
 
   const { data: row, error } = await supabase.from("appointments").update({
     type: a.type, starts_at: startsAt.toISOString(), ends_at: endsAt.toISOString(),
     customer_id: a.customer_id, vehicle_id: a.vehicle_id, title: a.title, notes: a.notes,
-  }).eq("id", id).eq("status", "scheduled").is("deleted_at", null).select("id").single();
+  }).eq("id", id).eq("status", current.status).is("deleted_at", null).select("id").single();
   if (error || !row) return { ok: false, error: "save" };
 
   if (new Date(current.starts_at).getTime() !== startsAt.getTime()) {

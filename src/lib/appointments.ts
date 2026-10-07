@@ -14,7 +14,7 @@ export function appointmentTypeVariant(type: AppointmentType, status: Appointmen
 }
 
 export function appointmentStatusVariant(status: AppointmentStatus): Variant {
-  return status === "completed" ? "success" : status === "no_show" ? "danger" : status === "cancelled" ? "neutral" : "info";
+  return status === "requested" ? "warning" : status === "completed" ? "success" : status === "no_show" ? "danger" : status === "cancelled" ? "neutral" : "info";
 }
 
 export const appointmentBlockClass: Record<Variant, string> = {

@@ -32,7 +32,7 @@ export default async function CalendarPage({ searchParams }: {
 
   const supabase = await createClient();
   const { data, error } = await supabase.from("appointments")
-    .select("*, customers(id, type, first_name, last_name, company_name), vehicles(id, year, make, model, trim)")
+    .select("id, type, status, source, title, notes, starts_at, ends_at, customer_id, vehicle_id, customers(id, type, first_name, last_name, company_name), vehicles(id, year, make, model, trim)")
     .is("deleted_at", null).gte("starts_at", rangeStart.toISOString()).lt("starts_at", rangeEnd.toISOString())
     .order("starts_at");
 
@@ -46,7 +46,7 @@ export default async function CalendarPage({ searchParams }: {
     const endDay = formatInTimeZone(a.ends_at, SHOP_TIMEZONE, DAY);
     const endMin = endDay === day ? minutesOf(a.ends_at) : 24 * 60;
     return {
-      id: a.id, type: a.type, status: a.status, title: a.title, notes: a.notes, startsAt: a.starts_at, endsAt: a.ends_at,
+      id: a.id, type: a.type, status: a.status, source: a.source, title: a.title, notes: a.notes, startsAt: a.starts_at, endsAt: a.ends_at,
       day, startMin, endMin: Math.max(endMin, startMin + 15),
       customerId: a.customer_id, customerName: a.customers ? customerName(a.customers) : null,
       vehicleLabel: a.vehicles ? vehicleLabel(a.vehicles) : null,
