@@ -109,6 +109,7 @@ export type Database = {
           notes: string | null
           repair_order_id: string | null
           shop_id: string
+          source: Database["public"]["Enums"]["record_source"]
           starts_at: string
           status: Database["public"]["Enums"]["appointment_status"]
           title: string | null
@@ -126,6 +127,7 @@ export type Database = {
           notes?: string | null
           repair_order_id?: string | null
           shop_id?: string
+          source?: Database["public"]["Enums"]["record_source"]
           starts_at: string
           status?: Database["public"]["Enums"]["appointment_status"]
           title?: string | null
@@ -143,6 +145,7 @@ export type Database = {
           notes?: string | null
           repair_order_id?: string | null
           shop_id?: string
+          source?: Database["public"]["Enums"]["record_source"]
           starts_at?: string
           status?: Database["public"]["Enums"]["appointment_status"]
           title?: string | null
@@ -384,6 +387,7 @@ export type Database = {
           taken_at: string | null
           updated_at: string
           vehicle_id: string | null
+          web_request_id: string | null
         }
         Insert: {
           caption?: string | null
@@ -403,6 +407,7 @@ export type Database = {
           taken_at?: string | null
           updated_at?: string
           vehicle_id?: string | null
+          web_request_id?: string | null
         }
         Update: {
           caption?: string | null
@@ -422,6 +427,7 @@ export type Database = {
           taken_at?: string | null
           updated_at?: string
           vehicle_id?: string | null
+          web_request_id?: string | null
         }
         Relationships: [
           {
@@ -464,6 +470,13 @@ export type Database = {
             columns: ["vehicle_id", "shop_id"]
             isOneToOne: false
             referencedRelation: "vehicles"
+            referencedColumns: ["id", "shop_id"]
+          },
+          {
+            foreignKeyName: "documents_web_request_id_shop_id_fkey"
+            columns: ["web_request_id", "shop_id"]
+            isOneToOne: false
+            referencedRelation: "web_requests"
             referencedColumns: ["id", "shop_id"]
           },
         ]
@@ -1171,6 +1184,152 @@ export type Database = {
           },
         ]
       }
+      web_requests: {
+        Row: {
+          appointment_id: string | null
+          claim_number: string | null
+          consent_text: string
+          consent_version: string
+          consented_at: string
+          created_at: string
+          created_by: string | null
+          customer_id: string
+          damage_description: string
+          deleted_at: string | null
+          fbc: string | null
+          fbclid: string | null
+          fbp: string | null
+          id: string
+          insurer_name: string | null
+          ip: unknown
+          is_insurance_claim: boolean | null
+          landing_page: string | null
+          locale: string
+          marketing_opt_in: boolean
+          meta_event_id: string
+          preferred_date: string
+          preferred_window: Database["public"]["Enums"]["time_window"]
+          privacy_accepted: boolean
+          referrer: string | null
+          service: string | null
+          shop_id: string
+          status: Database["public"]["Enums"]["web_request_status"]
+          updated_at: string
+          user_agent: string | null
+          utm_campaign: string | null
+          utm_content: string | null
+          utm_medium: string | null
+          utm_source: string | null
+          utm_term: string | null
+          vehicle_id: string | null
+        }
+        Insert: {
+          appointment_id?: string | null
+          claim_number?: string | null
+          consent_text: string
+          consent_version: string
+          consented_at: string
+          created_at?: string
+          created_by?: string | null
+          customer_id: string
+          damage_description: string
+          deleted_at?: string | null
+          fbc?: string | null
+          fbclid?: string | null
+          fbp?: string | null
+          id?: string
+          insurer_name?: string | null
+          ip?: unknown
+          is_insurance_claim?: boolean | null
+          landing_page?: string | null
+          locale: string
+          marketing_opt_in?: boolean
+          meta_event_id: string
+          preferred_date: string
+          preferred_window: Database["public"]["Enums"]["time_window"]
+          privacy_accepted: boolean
+          referrer?: string | null
+          service?: string | null
+          shop_id?: string
+          status?: Database["public"]["Enums"]["web_request_status"]
+          updated_at?: string
+          user_agent?: string | null
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          utm_term?: string | null
+          vehicle_id?: string | null
+        }
+        Update: {
+          appointment_id?: string | null
+          claim_number?: string | null
+          consent_text?: string
+          consent_version?: string
+          consented_at?: string
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string
+          damage_description?: string
+          deleted_at?: string | null
+          fbc?: string | null
+          fbclid?: string | null
+          fbp?: string | null
+          id?: string
+          insurer_name?: string | null
+          ip?: unknown
+          is_insurance_claim?: boolean | null
+          landing_page?: string | null
+          locale?: string
+          marketing_opt_in?: boolean
+          meta_event_id?: string
+          preferred_date?: string
+          preferred_window?: Database["public"]["Enums"]["time_window"]
+          privacy_accepted?: boolean
+          referrer?: string | null
+          service?: string | null
+          shop_id?: string
+          status?: Database["public"]["Enums"]["web_request_status"]
+          updated_at?: string
+          user_agent?: string | null
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          utm_term?: string | null
+          vehicle_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "web_requests_appointment_id_shop_id_fkey"
+            columns: ["appointment_id", "shop_id"]
+            isOneToOne: false
+            referencedRelation: "appointments"
+            referencedColumns: ["id", "shop_id"]
+          },
+          {
+            foreignKeyName: "web_requests_customer_id_shop_id_fkey"
+            columns: ["customer_id", "shop_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id", "shop_id"]
+          },
+          {
+            foreignKeyName: "web_requests_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "web_requests_vehicle_id_shop_id_fkey"
+            columns: ["vehicle_id", "shop_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id", "shop_id"]
+          },
+        ]
+      }
     }
     Views: {
       estimate_totals: {
@@ -1248,7 +1407,12 @@ export type Database = {
         | "text"
         | "status_change"
         | "system"
-      appointment_status: "scheduled" | "completed" | "no_show" | "cancelled"
+      appointment_status:
+        | "requested"
+        | "scheduled"
+        | "completed"
+        | "no_show"
+        | "cancelled"
       appointment_type:
         | "estimate"
         | "drop_off"
@@ -1302,6 +1466,7 @@ export type Database = {
         | "frame"
         | "other"
         | "paint_materials"
+      record_source: "app" | "web"
       ro_status:
         | "open"
         | "in_progress"
@@ -1312,7 +1477,9 @@ export type Database = {
       ro_type: "standard" | "classic"
       teardown_outcome: "repair" | "reassemble" | "declined_reassembly"
       teardown_role: "teardown" | "reassembly" | "destroyed_item"
+      time_window: "morning" | "afternoon"
       user_role: "owner"
+      web_request_status: "new" | "contacted" | "converted" | "spam" | "closed"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1448,7 +1615,13 @@ export const Constants = {
         "status_change",
         "system",
       ],
-      appointment_status: ["scheduled", "completed", "no_show", "cancelled"],
+      appointment_status: [
+        "requested",
+        "scheduled",
+        "completed",
+        "no_show",
+        "cancelled",
+      ],
       appointment_type: ["estimate", "drop_off", "delivery", "pickup", "other"],
       arrival_circumstance: [
         "customer_present",
@@ -1502,6 +1675,7 @@ export const Constants = {
         "other",
         "paint_materials",
       ],
+      record_source: ["app", "web"],
       ro_status: [
         "open",
         "in_progress",
@@ -1513,7 +1687,9 @@ export const Constants = {
       ro_type: ["standard", "classic"],
       teardown_outcome: ["repair", "reassemble", "declined_reassembly"],
       teardown_role: ["teardown", "reassembly", "destroyed_item"],
+      time_window: ["morning", "afternoon"],
       user_role: ["owner"],
+      web_request_status: ["new", "contacted", "converted", "spam", "closed"],
     },
   },
 } as const
