@@ -1398,6 +1398,11 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      web_intake_attach_photos: {
+        Args: { p_paths: string[]; p_request: string; p_shop: string }
+        Returns: number
+      }
+      web_intake_submit: { Args: { p: Json }; Returns: Json }
     }
     Enums: {
       activity_kind:
