@@ -27,9 +27,13 @@ App interna de gestión para Kings Auto Collision Inc., taller de carrocería, p
 
 ## Reglas de negocio que el código debe respetar
 
-- Cada línea de pieza lleva tipo obligatorio: OEM crash part, non-OEM aftermarket crash part, new, used, reconditioned o rebuilt (exigencia legal de la BAR de California).
+- Cada línea de pieza lleva dos datos obligatorios (exigencia legal de la BAR de California): estado (`part_condition`: new, used, rebuilt, reconditioned) y si es pieza de carrocería (`is_crash_part`); si lo es, origen obligatorio (`crash_part_origin`: oem o non_oem_aftermarket). Nunca uses términos como LKQ, Opt-OEM, Alt-OEM u OEM surplus.
+- Descripciones de presupuesto en lenguaje llano, sin siglas del sector (nada de "R&R" o "R&I").
+- El sales tax NO va en el presupuesto, solo en la factura. Prohibido cobrar "shop supplies" genéricos.
 - Ningún trabajo se factura por encima de lo autorizado. Cada suplemento necesita su propia autorización registrada.
 - Un presupuesto autorizado queda bloqueado: no se edita, se crea un suplemento.
+- Un presupuesto solo pasa a `authorized` o `declined` insertando una fila en `authorizations`; la base de datos calcula importe y huella y lo bloquea. Nunca actualices `status` a esos valores ni `locked_at` desde la app. Las autorizaciones no se modifican nunca.
+- Tipos de presupuesto: `teardown` (desmontaje), `repair` y `supplement`. Las restricciones de la base de datos reflejan la normativa de la BAR: valida en zod antes para dar mensajes claros.
 - Un clásico es una orden de tipo `classic` con fases; no hay un sistema de presupuestos aparte.
 - El impuesto se calcula por línea según `taxable`. No asumas qué tributa.
 
@@ -76,6 +80,10 @@ Mockups aprobados: dashboard, orden de reparación, tablero de producción y con
 - Errores de la base de datos se traducen a mensajes claros; `23505` (duplicado) se trata de forma específica.
 - Rutas de módulos propios fuera de `src/app/(app)/[section]`: al crear un módulo nuevo, quítalo de la lista de esa ruta.
 - Next.js 16: `src/proxy.ts` (no `middleware.ts`).
+- Errores de restricciones (`23514`): tradúcelos por nombre de restricción a una clave de `errors`; nunca muestres el texto crudo de Postgres.
+- Archivos en Supabase Storage: bucket privado `documents`, ruta `<shop_id>/...`, solo subir y leer (nunca sobrescribir ni borrar). Cada archivo tiene su fila en `documents`.
+- Citas pedidas desde la web: estado `requested` y `source = 'web'`. El taller las confirma (pasan a `scheduled`); el servidor solo confirma si la cita sigue en `requested`.
+- Solicitudes web (`web_requests`): solo lectura en la app (como mucho se cambia `status` o `deleted_at`). Se muestran en el detalle de la cita del calendario con `src/lib/web-requests.ts`; las fotos se leen con URLs firmadas (`createSignedUrls`, 1 h) y `<img>` normal, nunca `next/image`.
 
 <!-- BEGIN:nextjs-agent-rules -->
 

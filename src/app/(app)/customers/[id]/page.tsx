@@ -11,6 +11,8 @@ import { archiveCustomer } from "@/app/(app)/customers/actions";
 import { customerName, vehicleLabel, type Appointment } from "@/lib/customers";
 import { appointmentStatusVariant, appointmentTypeVariant } from "@/lib/appointments";
 import { formatDateTime, formatMiles, formatPhone } from "@/lib/format";
+import { formatRoNumber } from "@/lib/format";
+import { roStatusVariants, orderActivityText } from "@/lib/orders";
 
 export default async function CustomerPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -19,9 +21,10 @@ export default async function CustomerPage({ params }: { params: Promise<{ id: s
   const { data: customer } = await supabase.from("customers").select("*").eq("id", id).is("deleted_at", null).maybeSingle();
   if (!customer) notFound();
 
-  const [{ data: vehicles }, { data: appointments }] = await Promise.all([
+  const [{ data: vehicles }, { data: appointments }, ordersResult] = await Promise.all([
     supabase.from("vehicles").select("*").eq("customer_id", id).is("deleted_at", null).order("created_at"),
     supabase.from("appointments").select("*").eq("customer_id", id).is("deleted_at", null).order("starts_at", { ascending: false }),
+    supabase.from("repair_orders").select("*").eq("customer_id", id).is("deleted_at", null).order("created_at", { ascending: false }).limit(100),
   ]);
   const vehicleIds = (vehicles ?? []).map((v) => v.id);
   const appointmentIds = (appointments ?? []).map((a) => a.id);
@@ -73,6 +76,16 @@ export default async function CustomerPage({ params }: { params: Promise<{ id: s
       <div className="space-y-6">
         <div className="rounded-card border border-border bg-surface p-6">
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+            <h2>{t("customers.repairOrders")}</h2>
+            <Button asChild variant="outline"><Link href={`/orders/new?customer=${customer.id}`}><Plus className="size-4" />{t("customers.newRepairOrder")}</Link></Button>
+          </div>
+          {ordersResult.error ? <p role="alert">{t("errors.load")}</p> : !ordersResult.data?.length ? <p className="text-secondary-foreground">{t("customers.noRepairOrders")}</p> : <ul className="divide-y divide-border">
+            {ordersResult.data.map((order) => <li key={order.id}><Link href={`/orders/${order.id}`} className="flex min-h-11 flex-wrap items-center gap-3 py-3"><span className="font-mono font-semibold">{formatRoNumber(order.ro_number)}</span><StatusBadge variant={roStatusVariants[order.status]} label={t(`ro_status.${order.status}`)} /><span>{vehicleById.has(order.vehicle_id) && vehicleLabel(vehicleById.get(order.vehicle_id)!)}</span><span className="text-sm text-secondary-foreground">{formatDateTime(order.received_at)}</span></Link></li>)}
+          </ul>}
+        </div>
+
+        <div className="rounded-card border border-border bg-surface p-6">
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
             <h2>{t("customers.vehicles")}</h2>
             <Button asChild variant="outline"><Link href={`/customers/${customer.id}/vehicles/new`}><Plus className="size-4" />{t("customers.addVehicle")}</Link></Button>
           </div>
@@ -114,7 +127,7 @@ export default async function CustomerPage({ params }: { params: Promise<{ id: s
                   <StatusBadge variant={a.kind === "system" ? "neutral" : "info"} label={t(`activityKind.${a.kind}`)} />
                   <span className="text-sm text-secondary-foreground">{formatDateTime(a.occurred_at)}</span>
                 </div>
-                {a.body && <p className="mt-1 whitespace-pre-wrap break-words">{a.body}</p>}
+                {a.body && <p className="mt-1 whitespace-pre-wrap break-words">{orderActivityText(a.body, t)}</p>}
               </li>)}
             </ol>}
         </div>
