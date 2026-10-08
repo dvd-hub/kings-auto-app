@@ -6,6 +6,7 @@
 //   attach -> registra las fotos ya subidas (RPC web_intake_attach_photos; comprueba que existen en Storage).
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { z } from "npm:zod@4.6.5";
+import { sendIntakeEmails } from "./emails.ts";
 
 const SHOP_ID = Deno.env.get("KINGS_SHOP_ID") ?? "58788290-35ad-4dbb-8cd7-e5576ccdc548";
 const INTAKE_SECRET = Deno.env.get("WEB_INTAKE_SECRET") ?? "";
@@ -150,6 +151,22 @@ async function submit(input: z.infer<typeof submitSchema>): Promise<Response> {
       continue; // la solicitud ya está guardada; se pierde solo esa foto
     }
     uploads.push({ path: signed.path, signed_url: signed.signedUrl, token: signed.token, type: photo.type });
+  }
+
+  // Emails (Resend): solo la primera vez; en segundo plano para no retrasar la respuesta
+  if (!result.duplicate) {
+    const emails = sendIntakeEmails({
+      web_request_id: result.web_request_id, meta_event_id: input.meta_event_id, locale: input.locale,
+      first_name: input.first_name, last_name: input.last_name, phone: input.phone, email: input.email,
+      service: input.service, damage_description: input.damage_description,
+      is_insurance_claim: input.is_insurance_claim, insurer_name: input.insurer_name, claim_number: input.claim_number,
+      year: input.year, make: input.make, model: input.model, vin: input.vin,
+      preferred_date: input.preferred_date, preferred_window: input.preferred_window,
+      photo_count: photos.length, utm_source: input.utm_source, utm_campaign: input.utm_campaign,
+    });
+    const runtime = (globalThis as unknown as { EdgeRuntime?: { waitUntil(p: Promise<unknown>): void } }).EdgeRuntime;
+    if (runtime) runtime.waitUntil(emails);
+    else await emails;
   }
 
   return json(200, { ok: true, web_request_id: result.web_request_id, duplicate: result.duplicate, uploads });
