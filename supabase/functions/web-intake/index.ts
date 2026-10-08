@@ -60,6 +60,7 @@ const submitSchema = z.object({
   vin: z.union([z.literal(""), z.string().trim().toUpperCase().regex(/^[A-Z0-9]{5,17}$/)]).optional().default(""),
   preferred_date: z.iso.date(),
   preferred_window: z.enum(["morning", "afternoon"]),
+  needs_tow: z.boolean().optional().default(false), // el coche no se puede conducir: el taller organiza la grúa
   privacy_accepted: z.literal(true),
   marketing_opt_in: z.boolean().optional().default(false),
   consent_text: z.string().min(1).max(4000),
@@ -161,7 +162,7 @@ async function submit(input: z.infer<typeof submitSchema>): Promise<Response> {
       service: input.service, damage_description: input.damage_description,
       is_insurance_claim: input.is_insurance_claim, insurer_name: input.insurer_name, claim_number: input.claim_number,
       year: input.year, make: input.make, model: input.model, vin: input.vin,
-      preferred_date: input.preferred_date, preferred_window: input.preferred_window,
+      preferred_date: input.preferred_date, preferred_window: input.preferred_window, needs_tow: input.needs_tow,
       photo_count: photos.length, utm_source: input.utm_source, utm_campaign: input.utm_campaign,
     });
     const runtime = (globalThis as unknown as { EdgeRuntime?: { waitUntil(p: Promise<unknown>): void } }).EdgeRuntime;

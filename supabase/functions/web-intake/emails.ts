@@ -25,6 +25,7 @@ export type IntakeEmailData = {
   vin: string;
   preferred_date: string; // YYYY-MM-DD
   preferred_window: "morning" | "afternoon";
+  needs_tow: boolean;
   photo_count: number;
   utm_source: string;
   utm_campaign: string;
@@ -91,6 +92,7 @@ function shopEmail(d: IntakeEmailData) {
     ? ["Yes", d.insurer_name, d.claim_number ? `Claim # ${d.claim_number}` : ""].filter(Boolean).join(" · ")
     : d.is_insurance_claim === false ? "No" : "Not sure";
   const items: [string, string][] = [
+    ["Tow", d.needs_tow ? "YES: the car cannot be driven. Arrange pickup." : ""],
     ["Name", name],
     ["Phone", usPhone(d.phone)],
     ["Email", d.email],
@@ -113,7 +115,7 @@ ${rows(items)}
     from: FROM_EMAIL,
     to: [NOTIFY_EMAIL],
     reply_to: d.email || undefined,
-    subject: `New estimate request: ${name}${vehicle(d) ? ` · ${vehicle(d)}` : ""}`,
+    subject: `${d.needs_tow ? "[TOW] " : ""}New estimate request: ${name}${vehicle(d) ? ` · ${vehicle(d)}` : ""}`,
     html,
   };
 }
@@ -125,8 +127,12 @@ function customerEmail(d: IntakeEmailData) {
     ? [["Vehículo", vehicle(d)], ["Servicio", SERVICES[d.service]?.es ?? d.service], ["Día y franja preferidos", when]]
     : [["Vehicle", vehicle(d)], ["Service", SERVICES[d.service]?.en ?? d.service], ["Preferred day and time", when]];
   const intro = es
-    ? `Hola ${esc(d.first_name)}, recibimos tu solicitud de presupuesto. Te llamaremos para confirmar la hora exacta de tu visita.`
-    : `Hi ${esc(d.first_name)}, we received your estimate request. We'll call you to confirm the exact time of your visit.`;
+    ? (d.needs_tow
+      ? `Hola ${esc(d.first_name)}, recibimos tu solicitud de presupuesto. Te llamaremos para organizar la recogida de tu auto con grúa.`
+      : `Hola ${esc(d.first_name)}, recibimos tu solicitud de presupuesto. Te llamaremos para confirmar la hora exacta de tu visita.`)
+    : (d.needs_tow
+      ? `Hi ${esc(d.first_name)}, we received your estimate request. We'll call you to arrange the tow pickup for your car.`
+      : `Hi ${esc(d.first_name)}, we received your estimate request. We'll call you to confirm the exact time of your visit.`);
   const outro = es
     ? "Si quieres añadir algo, responde a este email."
     : "If you'd like to add anything, just reply to this email.";
