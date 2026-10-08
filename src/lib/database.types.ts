@@ -1207,6 +1207,7 @@ export type Database = {
           locale: string
           marketing_opt_in: boolean
           meta_event_id: string
+          needs_tow: boolean
           preferred_date: string
           preferred_window: Database["public"]["Enums"]["time_window"]
           privacy_accepted: boolean
@@ -1245,6 +1246,7 @@ export type Database = {
           locale: string
           marketing_opt_in?: boolean
           meta_event_id: string
+          needs_tow?: boolean
           preferred_date: string
           preferred_window: Database["public"]["Enums"]["time_window"]
           privacy_accepted: boolean
@@ -1283,6 +1285,7 @@ export type Database = {
           locale?: string
           marketing_opt_in?: boolean
           meta_event_id?: string
+          needs_tow?: boolean
           preferred_date?: string
           preferred_window?: Database["public"]["Enums"]["time_window"]
           privacy_accepted?: boolean
