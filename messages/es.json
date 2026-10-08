@@ -496,6 +496,8 @@
   },
   "webRequest": {
     "title": "Solicitud web",
+    "towNeeded": "Necesita grúa",
+    "towInstructions": "El auto no se puede manejar. Llama al cliente para organizar la recogida.",
     "loading": "Cargando solicitud web…",
     "error": "No se pudo cargar la solicitud web.",
     "notFound": "No se encontró una solicitud web para esta cita.",

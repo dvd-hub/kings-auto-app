@@ -496,6 +496,8 @@
   },
   "webRequest": {
     "title": "Web request",
+    "towNeeded": "Tow needed",
+    "towInstructions": "The car can't be driven. Call the customer to arrange the pickup.",
     "loading": "Loading web request…",
     "error": "The web request could not be loaded.",
     "notFound": "No web request found for this appointment.",

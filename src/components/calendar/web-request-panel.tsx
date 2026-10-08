@@ -49,9 +49,11 @@ export function WebRequestPanel({ appointmentId }: { appointmentId: string }) {
       <div className="flex flex-wrap items-center gap-2">
         <h3 className="font-display text-xl font-bold">{t("title")}</h3>
         <StatusBadge variant={statusVariants[request.status]} label={t(`status.${request.status}`)} />
+        {request.needs_tow && <StatusBadge variant="warning" label={t("towNeeded")} />}
       </div>
       <p className="text-sm text-secondary-foreground">{t("received", { date: formatDateTime(request.created_at) })}</p>
     </header>
+    {request.needs_tow && <p className="rounded-control bg-status-warning-bg p-3 text-sm font-medium text-status-warning-text">{t("towInstructions")}</p>}
     <dl className="grid min-w-0 gap-3 sm:grid-cols-2">
       <Field label={t("service")} value={request.service || t("notProvided")} />
       <Field label={t("damageDescription")} value={request.damage_description} className="sm:col-span-2" />
