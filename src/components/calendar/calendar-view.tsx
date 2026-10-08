@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { AppointmentForm, type AppointmentDraft } from "@/components/calendar/appointment-form";
+import { WebRequestPanel } from "@/components/calendar/web-request-panel";
 import { setAppointmentStatus } from "@/app/(app)/calendar/actions";
 import { appointmentBlockClass, appointmentStatusVariant, appointmentTypeVariant } from "@/lib/appointments";
 import type { Database } from "@/lib/database.types";
@@ -206,7 +207,7 @@ function AppointmentDetail({ appointment: a, onClose, onEdit }: { appointment: C
   }
 
   return <Dialog open={a !== null} onOpenChange={(open) => { if (!open) onClose(); }}>
-    <DialogContent className="sm:max-w-md">
+    <DialogContent className={a?.source === "web" ? "max-h-[calc(100dvh-2rem)] overflow-y-auto sm:max-w-2xl [&>button]:min-h-[44px] [&>button]:min-w-[44px]" : "sm:max-w-md"}>
       {a && <>
         <DialogTitle className="font-display text-[22px] font-bold">{a.title || ty(a.type)}</DialogTitle>
         <DialogDescription className="sr-only">{t("details")}</DialogDescription>
@@ -220,6 +221,7 @@ function AppointmentDetail({ appointment: a, onClose, onEdit }: { appointment: C
           {a.customerName && <p>{t("customer")}: <Link href={`/customers/${a.customerId}`} className="inline-flex min-h-11 items-center font-semibold text-link underline hover:text-link-hover">{a.customerName}</Link></p>}
           {a.vehicleLabel && <p>{t("vehicle")}: {a.vehicleLabel}</p>}
           {a.notes && <p className="whitespace-pre-wrap break-words text-secondary-foreground">{a.notes}</p>}
+          {a.source === "web" && <WebRequestPanel key={a.id} appointmentId={a.id} />}
           {a.status === "requested" && <div className="flex flex-wrap gap-2 pt-2">
             <Button type="button" variant="outline" disabled={pending} onClick={() => onEdit(a)}><Pencil className="size-4" />{t("edit")}</Button>
             <Button type="button" variant="outline" disabled={pending} onClick={() => setStatus("scheduled")}>{t("confirm")}</Button>

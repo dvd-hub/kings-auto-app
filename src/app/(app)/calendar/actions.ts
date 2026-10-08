@@ -7,8 +7,21 @@ import { createClient } from "@/lib/supabase/server";
 import { getT } from "@/i18n/server";
 import { SHOP_TIMEZONE } from "@/lib/config";
 import { appointmentSchema, fieldErrors, type FieldErrors } from "@/lib/validation";
+import { getWebRequestDetail, type WebRequestDetail } from "@/lib/web-requests";
 
 export type AppointmentResult = { ok: true; id: string } | { ok: false; error?: string; fieldErrors?: FieldErrors };
+
+const webRequestSchema = z.object({ appointmentId: z.uuid() });
+
+export async function getWebRequest(input: unknown): Promise<{ ok: true; data: WebRequestDetail | null } | { ok: false }> {
+  const parsed = webRequestSchema.safeParse(input);
+  if (!parsed.success) return { ok: false };
+  try {
+    return { ok: true, data: await getWebRequestDetail(parsed.data.appointmentId) };
+  } catch {
+    return { ok: false };
+  }
+}
 
 type Supabase = Awaited<ReturnType<typeof createClient>>;
 type Prepared =
