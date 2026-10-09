@@ -6,7 +6,6 @@ import { createClient } from "@/lib/supabase/server";
 import { SHOP_TIMEZONE } from "@/lib/config";
 import { formatRoNumber } from "@/lib/format";
 import { OrderForm } from "@/components/orders/order-form";
-import { OrderTouchTargets } from "@/components/orders/touch-targets";
 
 export async function OrderFormPage({ orderId = null, search }: { orderId?: string | null; search: { customer?: string; vehicle?: string } }) {
   const t = await getT();
@@ -25,7 +24,7 @@ export async function OrderFormPage({ orderId = null, search }: { orderId?: stri
   const vehicleId = partiesLocked ? order?.vehicle_id : search.vehicle ?? (customerId === order?.customer_id ? order?.vehicle_id : "");
   const vehicle = vehicles?.find((v) => v.id === vehicleId);
   const local = (value: string) => formatInTimeZone(value, SHOP_TIMEZONE, "yyyy-MM-dd'T'HH:mm");
-  return <section data-orders-module className="space-y-6"><OrderTouchTargets /><h1>{order ? `${t("orders.edit")} · ${formatRoNumber(order.ro_number)}` : t("orders.new")}</h1>
+  return <section className="space-y-6"><h1>{order ? `${t("orders.edit")} · ${formatRoNumber(order.ro_number)}` : t("orders.new")}</h1>
     {customerId && !customer && <p role="alert" className="text-status-danger-text">{t("errors.relatedNotFound")}</p>}
     <OrderForm orderId={orderId} customer={customer} vehicles={vehicles ?? []} partiesLocked={partiesLocked} initial={{
       customer_id: customer?.id ?? "", vehicle_id: vehicleId ?? "", type: order?.type ?? "standard", odometer_in: order ? String(order.odometer_in) : vehicle?.odometer_mi?.toString() ?? "", odometer_out: order?.odometer_out?.toString() ?? "", requested_repairs: order?.requested_repairs ?? "", arrival_circumstance: order?.arrival_circumstance ?? "customer_present", received_at: local(order?.received_at ?? new Date().toISOString()), promised_at: order?.promised_at ? local(order.promised_at) : "", notes: order?.notes ?? "",

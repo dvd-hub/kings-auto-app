@@ -70,7 +70,7 @@ export async function changeOrderStatus(input: unknown): Promise<OrderResult> {
   if (order.status === parsed.data.status) return { ok: true, id: order.id };
   const now = new Date().toISOString();
   const status = parsed.data.status;
-  const { data: updated, error } = await supabase.from("repair_orders").update({ status, ...(status === "completed" ? { completed_at: now } : {}), ...(status === "delivered" ? { delivered_at: now } : {}) }).eq("id", order.id).is("deleted_at", null).eq("status", order.status).select("id").maybeSingle();
+  const { data: updated, error } = await supabase.from("repair_orders").update({ status, ...(["open", "in_progress"].includes(status) ? { completed_at: null, delivered_at: null } : {}), ...(status === "completed" ? { completed_at: now, delivered_at: null } : {}), ...(status === "delivered" ? { delivered_at: now } : {}) }).eq("id", order.id).is("deleted_at", null).eq("status", order.status).select("id").maybeSingle();
   if (error || !updated) return { ok: false, error: error ? orderError(error) : "changedElsewhere" };
   const { error: activityError } = await supabase.from("activities").insert({ repair_order_id: order.id, customer_id: order.customer_id, kind: "status_change", body: orderEvent("statusActivity", { ro: formatRoNumber(order.ro_number), status }) });
   refreshOrder(order.id, order.customer_id);

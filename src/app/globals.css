@@ -67,6 +67,7 @@
 }
 
 @theme inline {
+  --spacing-11: 44px;
   --color-background: var(--background);
   --color-card: var(--card);
   --color-card-foreground: var(--card-foreground);
@@ -123,11 +124,13 @@
   --font-mono: var(--font-ibm-plex-mono);
 }
 
-html { font-size: 15px; }
-body { margin: 0; min-height: 100vh; background: var(--app-bg); color: var(--text-primary); font-family: var(--font-barlow), sans-serif; }
-button, input { font: inherit; }
-button { cursor: pointer; }
-input:-webkit-autofill { box-shadow: 0 0 0 1000px var(--input-bg) inset; -webkit-text-fill-color: var(--text-primary); }
-h1, h2 { font-family: var(--font-barlow-semi), sans-serif; font-weight: 700; line-height: 1.15; }
-h1 { font-size: 34px; }
-h2 { font-size: 22px; }
+@layer base {
+  html { font-size: 15px; }
+  body { margin: 0; min-height: 100vh; background: var(--app-bg); color: var(--text-primary); font-family: var(--font-barlow), sans-serif; }
+  button, input { font: inherit; }
+  button { cursor: pointer; }
+  input:-webkit-autofill { box-shadow: 0 0 0 1000px var(--input-bg) inset; -webkit-text-fill-color: var(--text-primary); }
+  h1, h2 { font-family: var(--font-barlow-semi), sans-serif; font-weight: 700; line-height: 1.15; }
+  h1 { font-size: 34px; }
+  h2 { font-size: 22px; }
+}

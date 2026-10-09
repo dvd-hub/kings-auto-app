@@ -11,7 +11,6 @@ import { StatusBadge } from "@/components/ui/status-badge";
 import { Dialog, DialogContent, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Field, Select, fieldAria } from "@/components/form-field";
 import { LineEditor } from "@/components/orders/line-editor";
-import { OrderTouchTargets } from "@/components/orders/touch-targets";
 import { estimateEditable, estimateStatusVariants, type Estimate, type EstimateLine, type EstimateTotals, type OrderResult } from "@/lib/orders";
 import { formatMoney, formatRoNumber, parseMoneyToCents } from "@/lib/format";
 import type { FieldErrors } from "@/lib/validation";
@@ -45,7 +44,7 @@ export function EstimateBuilder({ estimate, lines, totals, order, customer, epaA
   function changeLine(lineId: string, value: "up" | "down" | "remove") {
     start(async () => { handle(await changeEstimateLine({ orderId: order.id, estimateId: estimate.id, lineId, command: value }), t("estimates.lineSaved")); });
   }
-  return <section data-orders-module className="min-w-0 space-y-6"><OrderTouchTargets />
+  return <section className="min-w-0 space-y-6">
     <div className="flex flex-wrap items-start justify-between gap-3"><div><h1 className={estimate.status === "voided" ? "line-through" : ""}>{t(`estimate_kind.${estimate.kind}`)} {estimate.seq}</h1><div className="mt-2 flex flex-wrap items-center gap-3"><StatusBadge variant={estimateStatusVariants[estimate.status]} label={t(`estimate_status.${estimate.status}`)} /><Link href={`/orders/${order.id}`} className="inline-flex min-h-11 items-center font-mono text-link underline">{formatRoNumber(order.ro_number)}</Link><Link href={`/customers/${customer.id}`} className="inline-flex min-h-11 items-center text-link underline">{customer.name}</Link></div></div>
       {editable && <div className="flex flex-wrap gap-2">{estimate.status === "draft" ? <Button disabled={pending || blockedThirdParty} onClick={() => command("sent")}>{t("estimates.markSent")}</Button> : <Button variant="outline" disabled={pending} onClick={() => command("draft")}>{t("estimates.backDraft")}</Button>}<Button variant="outline" disabled={pending} onClick={() => setVoidOpen(true)}>{t("estimates.void")}</Button></div>}
     </div>

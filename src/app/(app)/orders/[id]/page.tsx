@@ -6,7 +6,6 @@ import { createClient } from "@/lib/supabase/server";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { NewEstimateButtons, OrderStatusSelector, OrderActivityForm } from "@/components/orders/order-controls";
-import { OrderTouchTargets } from "@/components/orders/touch-targets";
 import { roStatusVariants, estimateStatusVariants, orderActivityText } from "@/lib/orders";
 import { customerName, vehicleLabel } from "@/lib/customers";
 import { formatRoNumber, formatMoney, formatDateTime, formatMiles, formatPhone } from "@/lib/format";
@@ -27,8 +26,8 @@ export default async function OrderPage({ params }: { params: Promise<{ id: stri
   const totals = new Map((totalsResult.data ?? []).map((row) => [row.estimate_id, row.total_cents]));
   const customer = order.customers;
   const vehicle = order.vehicles;
-  return <section data-orders-module className="space-y-6"><OrderTouchTargets />
-    <div className="flex flex-wrap items-start justify-between gap-4"><div><h1 className="font-mono">{formatRoNumber(order.ro_number)}</h1><div className="mt-2 flex flex-wrap gap-2"><StatusBadge variant={roStatusVariants[order.status]} label={t(`ro_status.${order.status}`)} /><StatusBadge variant="neutral" label={t(`ro_type.${order.type}`)} /></div></div><div className="flex flex-wrap gap-2"><Button asChild variant="outline"><Link href={`/orders/${id}/edit`}>{t("common.edit")}</Link></Button><OrderStatusSelector id={id} status={order.status} /></div></div>
+  return <section className="space-y-6">
+    <div className="flex flex-wrap items-start justify-between gap-4"><div><h1 className="font-mono">{formatRoNumber(order.ro_number)}</h1><div className="mt-2 flex flex-wrap gap-2"><StatusBadge variant={roStatusVariants[order.status]} label={t(`ro_status.${order.status}`)} />{order.type === "classic" && <StatusBadge variant="neutral" label={t(`ro_type.${order.type}`)} />}</div></div><div className="flex flex-wrap gap-2"><Button asChild variant="outline"><Link href={`/orders/${id}/edit`}>{t("common.edit")}</Link></Button><OrderStatusSelector id={id} status={order.status} /></div></div>
     <div className="grid gap-6 lg:grid-cols-2">
       <div className="min-w-0 space-y-2 rounded-card border border-border bg-surface p-5 sm:p-6"><h2>{t("orders.customerVehicle")}</h2>
         {customer && <p><Link href={`/customers/${customer.id}`} className="inline-flex min-h-11 items-center font-semibold text-link underline">{customerName(customer)}</Link>{customer.phone && <a href={`tel:${customer.phone}`} className="ml-3 inline-flex min-h-11 items-center text-link">{formatPhone(customer.phone)}</a>}</p>}

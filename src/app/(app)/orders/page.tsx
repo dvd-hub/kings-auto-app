@@ -5,7 +5,6 @@ import { Constants } from "@/lib/database.types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { OrderList } from "@/components/orders/order-list";
-import { OrderTouchTargets } from "@/components/orders/touch-targets";
 
 export default async function OrdersPage({ searchParams }: { searchParams: Promise<{ q?: string; status?: string }> }) {
   const search = await searchParams;
@@ -24,7 +23,7 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
     else query = query.ilike("customers.search_text", `%${q.replace(/[\\%_]/g, "\\$&")}%`).is("customers.deleted_at", null);
   }
   const { data, error } = await query;
-  return <section data-orders-module className="space-y-5"><OrderTouchTargets />
+  return <section className="space-y-5">
     <div className="flex flex-wrap items-center justify-between gap-3"><h1>{t("orders.title")}</h1><Button asChild><Link href="/orders/new">{t("orders.new")}</Link></Button></div>
     <form className="flex flex-wrap gap-2" action="/orders"><input type="hidden" name="status" value={selected} /><Input name="q" type="search" defaultValue={q} aria-label={t("orders.search")} placeholder={t("orders.search")} className="w-full sm:max-w-md" /><Button variant="outline">{t("orders.searchButton")}</Button></form>
     <div className="flex flex-wrap gap-2" role="group" aria-label={t("orders.filterStatus")}>
