@@ -9,6 +9,9 @@ import { NewEstimateButtons, OrderStatusSelector, OrderActivityForm } from "@/co
 import { roStatusVariants, estimateStatusVariants, orderActivityText } from "@/lib/orders";
 import { customerName, vehicleLabel } from "@/lib/customers";
 import { formatRoNumber, formatMoney, formatDateTime, formatMiles, formatPhone } from "@/lib/format";
+import { OrderDocuments } from "@/components/orders/order-documents";
+import { signedDocuments } from "@/lib/documents";
+import type { SignedDocument } from "@/lib/document-shared";
 
 export default async function OrderPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -18,12 +21,17 @@ export default async function OrderPage({ params }: { params: Promise<{ id: stri
   const { data: order, error } = await supabase.from("repair_orders").select("*,customers(*),vehicles(*)").eq("id", id).is("deleted_at", null).maybeSingle();
   if (error) return <p role="alert">{t("errors.load")}</p>;
   if (!order) notFound();
-  const [estimatesResult, totalsResult, activitiesResult] = await Promise.all([
+  const [estimatesResult, totalsResult, activitiesResult, docsResult, authResult] = await Promise.all([
     supabase.from("estimates").select("*").eq("repair_order_id", id).is("deleted_at", null).order("created_at", { ascending: false }),
     supabase.from("estimate_totals").select("*").eq("repair_order_id", id),
     supabase.from("activities").select("*").eq("repair_order_id", id).is("deleted_at", null).order("occurred_at", { ascending: false }).limit(100),
+    supabase.from("documents").select("*").eq("repair_order_id", id).is("deleted_at", null).in("kind", ["photo", "third_party_estimate", "authorization_proof", "other"]).order("created_at", { ascending: false }),
+    supabase.from("authorizations").select("*,estimates!inner(repair_order_id)").eq("estimates.repair_order_id", id).is("deleted_at", null),
   ]);
   const totals = new Map((totalsResult.data ?? []).map((row) => [row.estimate_id, row.total_cents]));
+  const authorizations = new Map((authResult.data ?? []).map((row) => [row.estimate_id, row]));
+  let documents: SignedDocument[] = [], loadFailed = Boolean(docsResult.error);
+  try { documents = await signedDocuments(supabase, docsResult.data ?? []); } catch { loadFailed = true; }
   const customer = order.customers;
   const vehicle = order.vehicles;
   return <section className="space-y-6">
@@ -39,9 +47,11 @@ export default async function OrderPage({ params }: { params: Promise<{ id: stri
     </div>
     <div className="rounded-card border border-border bg-surface p-5 sm:p-6"><h2 className="mb-3">{t("orders.requestedRepairs")}</h2><p className="whitespace-pre-wrap break-words">{order.requested_repairs}</p></div>
     {order.notes && <div className="rounded-card border border-border bg-surface p-5 sm:p-6"><h2 className="mb-3">{t("orders.notes")}</h2><p className="whitespace-pre-wrap break-words">{order.notes}</p></div>}
+    <OrderDocuments orderId={id} shopId={order.shop_id} documents={documents} loadFailed={loadFailed} />
     <div className="rounded-card border border-border bg-surface p-5 sm:p-6"><div className="mb-4 flex flex-wrap items-center justify-between gap-3"><h2>{t("orders.estimates")}</h2><NewEstimateButtons orderId={id} disabled={["cancelled", "delivered"].includes(order.status)} /></div>
-      {estimatesResult.error || totalsResult.error ? <p role="alert">{t("errors.load")}</p> : !estimatesResult.data?.length ? <p className="text-secondary-foreground">{t("orders.noEstimates")}</p> : <ul className="divide-y divide-border">{estimatesResult.data.map((estimate) => <li key={estimate.id}><Link href={`/orders/${id}/estimates/${estimate.id}`} className={`flex min-h-11 flex-wrap items-center justify-between gap-3 py-4 ${estimate.status === "voided" ? "line-through" : ""}`}>
+      {estimatesResult.error || totalsResult.error || authResult.error ? <p role="alert">{t("errors.load")}</p> : !estimatesResult.data?.length ? <p className="text-secondary-foreground">{t("orders.noEstimates")}</p> : <ul className="divide-y divide-border">{estimatesResult.data.map((estimate) => <li key={estimate.id}><Link href={`/orders/${id}/estimates/${estimate.id}`} className={`flex min-h-11 flex-wrap items-center justify-between gap-3 py-4 ${estimate.status === "voided" ? "line-through" : ""}`}>
         <span className="font-semibold">{t(`estimate_kind.${estimate.kind}`)} {estimate.seq}</span><StatusBadge variant={estimateStatusVariants[estimate.status]} label={t(`estimate_status.${estimate.status}`)} /><span className="font-mono">{formatMoney(totals.get(estimate.id) ?? 0)}</span><span className="text-secondary-foreground">{formatDateTime(estimate.created_at)}</span>
+        {authorizations.get(estimate.id) && <span className="w-full text-sm text-secondary-foreground">{t(`authorization.method.${authorizations.get(estimate.id)!.method}`)} · {formatDateTime(authorizations.get(estimate.id)!.authorized_at)}</span>}
       </Link></li>)}</ul>}
     </div>
     <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,380px)]">

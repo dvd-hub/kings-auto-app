@@ -89,7 +89,7 @@
     "relatedNotFound": "No se encontró el cliente, vehículo u orden relacionado, o está archivado.",
     "orderPartiesLocked": "El cliente y el vehículo no se pueden cambiar cuando un presupuesto deja de ser borrador.",
     "orderClosed": "No se pueden crear presupuestos para una orden cancelada o entregada.",
-    "payorDocumentRequired": "Adjunta el presupuesto de la aseguradora o tercero pagador (disponible próximamente) antes de enviar.",
+    "payorDocumentRequired": "Adjunta el estimado de la aseguradora antes de marcar este presupuesto como entregado.",
     "epaRequired": "Añade el número EPA del taller en Ajustes antes de cobrar una tarifa por residuos peligrosos.",
     "estimateNeedsLines": "Añade al menos una línea al presupuesto antes de enviar.",
     "teardownNeedsLines": "Añade líneas de mano de obra de Desmontaje y Reensamblaje antes de enviar.",
@@ -97,7 +97,22 @@
     "duplicateOrderRecord": "Ya existe un registro con este número. Actualiza la página y vuelve a intentarlo.",
     "historySave": "Se guardaron los cambios, pero no se pudo registrar la entrada del historial.",
     "odometerSave": "Se guardó la orden, pero no se pudo actualizar el odómetro del vehículo.",
-    "linePositionConflict": "Las posiciones de las líneas cambiaron o están en conflicto. Actualiza antes de volver a moverlas."
+    "linePositionConflict": "Las posiciones de las líneas cambiaron o están en conflicto. Actualiza antes de volver a moverlas.",
+    "documentRead": "No se pudo leer el documento privado. Actualiza la página e inténtalo de nuevo.",
+    "documentUpload": "La subida falló. El documento no se registró.",
+    "documentOrphan": "El archivo se subió pero no se pudo registrar. Permanece en Storage. No repitas el intento en bucle; pide al administrador del taller que lo revise.",
+    "documentSize": "Cada archivo debe tener contenido y no superar los 25 MB.",
+    "documentMime": "Formato no admitido. Usa JPEG, PNG, WebP, HEIC o PDF.",
+    "documentPath": "La ruta del archivo no pertenece a esta orden o a la carpeta permitida.",
+    "documentHash": "La comprobación de integridad del documento falló.",
+    "documentProtected": "Este documento está adjunto a un presupuesto y no se puede quitar. Primero cambia el adjunto en un presupuesto editable.",
+    "signatureRequired": "Una autorización escrita requiere la firma del cliente.",
+    "authorizationInvalid": "Los datos de autorización no corresponden al método o a la decisión.",
+    "authorizationContact": "Revisa los datos de contacto de la autorización.",
+    "authorizationName": "Introduce el nombre de quien autoriza.",
+    "pdfPending": "La decisión del cliente se guardó y el presupuesto está bloqueado. Falta su PDF firmado. Pulsa Generar PDF firmado para terminar.",
+    "pdfFailed": "No se pudo generar el PDF. Inténtalo de nuevo con Generar PDF firmado.",
+    "duplicateDocument": "Este archivo ya está registrado. No lo subas de nuevo."
   },
   "validation": {
     "required": "Este campo es obligatorio.",
@@ -122,7 +137,9 @@
     "crashOriginRequired": "Elige fabricante original u otro fabricante para la pieza de carrocería.",
     "vehicleNotOwned": "Este vehículo no pertenece al cliente seleccionado.",
     "invalidRole": "Elige una función de desmontaje que corresponda a este tipo de línea.",
-    "tooLong": "Este texto es demasiado largo."
+    "tooLong": "Este texto es demasiado largo.",
+    "authorizationDateRange": "Usa la hora del taller: sin fechas futuras ni más de 7 días atrás.",
+    "signatureRequired": "El cliente debe firmar antes de guardar."
   },
   "customerType": {
     "individual": "Particular",
@@ -415,7 +432,8 @@
     "statusActivity": "Orden de reparación {ro} cambió a {status}",
     "sentActivity": "{kind} {seq} enviado",
     "voidActivity": "{kind} {seq} anulado",
-    "draftActivity": "{kind} {seq} volvió a borrador"
+    "draftActivity": "{kind} {seq} volvió a borrador",
+    "authorizationActivity": "{kind} {seq} {decision} por {name} ({method})."
   },
   "estimates": {
     "markSent": "Marcar como enviado",
@@ -545,5 +563,65 @@
     "next": "Siguiente",
     "openOriginal": "Abrir original",
     "close": "Cerrar"
+  },
+  "documents": {
+    "title": "Fotos y documentos",
+    "addPhotos": "Añadir fotos",
+    "addDocument": "Añadir documento",
+    "limit": "Máximo 25 MB por archivo. JPEG, PNG, WebP, HEIC o PDF.",
+    "empty": "Todavía no hay fotos ni documentos.",
+    "heic": "Imagen HEIC · abrir archivo",
+    "file": "Documento",
+    "viewer": "Foto o documento",
+    "privateLink": "Los enlaces privados caducan en 10 minutos. Actualiza la página para renovarlos.",
+    "openFile": "Abrir archivo",
+    "caption": "Pie de foto / nombre del archivo",
+    "remove": "Quitar",
+    "removeConfirm": "¿Quitar este elemento de la orden? El archivo almacenado se conservará.",
+    "confirmRemove": "Confirmar retirada",
+    "keep": "Conservar archivo",
+    "saved": "Documento actualizado.",
+    "attachInsurer": "Adjuntar estimado de la aseguradora",
+    "changeInsurer": "Cambiar estimado de la aseguradora",
+    "upload": {
+      "waiting": "En espera",
+      "uploading": "Subiendo",
+      "registering": "Comprobando y registrando",
+      "done": "Guardado",
+      "failed": "Error"
+    }
+  },
+  "authorization": {
+    "title": "Autorización del cliente",
+    "record": "Registrar autorización",
+    "decline": "El cliente rechazó",
+    "previewPdf": "Vista previa del PDF",
+    "downloadPdf": "Descargar PDF firmado",
+    "generatePdf": "Generar PDF firmado",
+    "pdfSaved": "PDF firmado guardado.",
+    "saved": "Decisión del cliente registrada.",
+    "review": "Revisa el presupuesto y registra la decisión del cliente.",
+    "methodLabel": "Método de autorización",
+    "method": {
+      "written": "Escrita (firma)",
+      "oral": "Oral (teléfono o en persona)",
+      "electronic": "Electrónica (mensaje o correo)"
+    },
+    "decision": {
+      "approved": "Autorizado",
+      "declined": "Rechazado"
+    },
+    "name": "Nombre de quien autoriza",
+    "date": "Fecha y hora · hora del taller (Los Ángeles)",
+    "signature": "Firma del cliente",
+    "clear": "Limpiar",
+    "phoneCalled": "Teléfono llamado (vacío si fue en persona)",
+    "email": "Correo de contacto",
+    "phone": "Teléfono de contacto",
+    "returnParts": "El cliente solicita la devolución de las piezas sustituidas",
+    "returnPartsHint": "Las piezas de intercambio o en garantía no se devuelven; se pueden mostrar al cliente.",
+    "proof": "Prueba de autorización",
+    "addProof": "Adjuntar captura del mensaje (opcional)",
+    "save": "Guardar decisión del cliente"
   }
 }

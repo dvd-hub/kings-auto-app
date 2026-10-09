@@ -11,6 +11,10 @@ import { StatusBadge } from "@/components/ui/status-badge";
 import { Dialog, DialogContent, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Field, Select, fieldAria } from "@/components/form-field";
 import { LineEditor } from "@/components/orders/line-editor";
+import { DocumentUpload } from "@/components/orders/document-upload";
+import { EstimateAuthorization } from "@/components/orders/estimate-authorization";
+import type { SignedDocument, Authorization } from "@/lib/document-shared";
+import { attachPayorDocument } from "@/app/(app)/orders/document-actions";
 import { estimateEditable, estimateStatusVariants, type Estimate, type EstimateLine, type EstimateTotals, type OrderResult } from "@/lib/orders";
 import { formatMoney, formatRoNumber, parseMoneyToCents } from "@/lib/format";
 import type { FieldErrors } from "@/lib/validation";
@@ -18,7 +22,7 @@ import { saveEstimateDetails, changeEstimateStatus, changeEstimateLine } from "@
 
 type Values = { basis: string; teardown_area: string; teardown_may_prevent_restoration: string; reassembly_max_days: string; pickup_deadline_days: string; payor_name: string; payor_claim_number: string; payor_estimate_total_cents: string; payor_approved_amount_cents: string };
 
-export function EstimateBuilder({ estimate, lines, totals, order, customer, epaAvailable }: { estimate: Estimate; lines: EstimateLine[]; totals: EstimateTotals | null; order: { id: string; ro_number: number }; customer: { id: string; name: string }; epaAvailable: boolean }) {
+export function EstimateBuilder({ estimate, lines, totals, order, customer, epaAvailable, payorDocument, authorization, signature, proofs }: { estimate: Estimate; lines: EstimateLine[]; totals: EstimateTotals | null; order: { id: string; ro_number: number; shop_id: string }; customer: { id: string; name: string; phone: string | null; email: string | null }; epaAvailable: boolean; payorDocument: SignedDocument | null; authorization: Authorization | null; signature: SignedDocument | null; proofs: SignedDocument[] }) {
   const t = useTranslations();
   const locale = useLocale();
   const editable = estimateEditable(estimate);
@@ -60,7 +64,7 @@ export function EstimateBuilder({ estimate, lines, totals, order, customer, epaA
           <div className="space-y-4 rounded-card border border-border bg-surface p-5 sm:p-6"><h2>{t("estimates.payor")}</h2>
             <Field id="basis" label={t("estimates.basis")} error={errors.basis}><Select {...fieldAria("basis", errors.basis)} value={values.basis} onChange={set("basis")} disabled={!editable || pending}><option value="shop">{t("estimate_basis.shop")}</option><option value="third_party">{t("estimate_basis.third_party")}</option></Select></Field>
             <div className="grid gap-4 sm:grid-cols-2">{input("payor_name", t("estimates.payorName"))}{input("payor_claim_number", t("estimates.claimNumber"))}{input("payor_estimate_total_cents", t("estimates.payorTotal"), undefined, true)}{input("payor_approved_amount_cents", `${t("estimates.payorApproved")} · ${t("common.optional")}`, t("estimates.ifKnown"), true)}</div>
-            {blockedThirdParty && <p role="status" className="rounded-control bg-status-warning-bg p-3 text-status-warning-text">{t("estimates.attachPayor")}</p>}
+            {values.basis === "third_party" && <div className="space-y-2">{payorDocument?.url && <a className="inline-flex min-h-11 items-center break-all text-link underline" href={payorDocument.url} target="_blank" rel="noopener noreferrer">{t("documents.openFile")} · {payorDocument.caption}</a>}{editable && <DocumentUpload shopId={order.shop_id} orderId={order.id} estimateId={estimate.id} kind="third_party_estimate" label={t(payorDocument ? "documents.changeInsurer" : "documents.attachInsurer")} disabled={pending} onUploaded={async (documentId) => { const saved = await saveEstimateDetails(order.id, estimate.id, values); if (!saved.ok) { setErrors(saved.fieldErrors ?? {}); return saved; } return attachPayorDocument({ orderId: order.id, estimateId: estimate.id, documentId }); }} />}{blockedThirdParty && <p role="status" className="text-status-warning-text">{t("errors.payorDocumentRequired")}</p>}</div>}
             {editable && <Button type="submit" variant="outline" disabled={pending}>{pending ? t("common.saving") : t("estimates.saveDetails")}</Button>}
           </div>
         </form>
@@ -74,7 +78,7 @@ export function EstimateBuilder({ estimate, lines, totals, order, customer, epaA
             {editable && <div className="flex flex-wrap gap-2"><Button variant="outline" disabled={pending} onClick={() => setEditor(line)}>{t("common.edit")}</Button><Button variant="outline" className="min-h-11 min-w-11 px-3" aria-label={t("estimates.moveUp", { description: line.description })} disabled={pending || index === 0} onClick={() => changeLine(line.id, "up")}><ArrowUp className="size-4" /></Button><Button variant="outline" className="min-h-11 min-w-11 px-3" aria-label={t("estimates.moveDown", { description: line.description })} disabled={pending || index === lines.length - 1} onClick={() => changeLine(line.id, "down")}><ArrowDown className="size-4" /></Button><Button variant="outline" disabled={pending} onClick={() => changeLine(line.id, "remove")}>{t("estimates.remove")}</Button></div>}
           </li>)}</ol>
         </div>
-        <p className="text-secondary-foreground">{t("estimates.authorizationSoon")}</p>
+        <EstimateAuthorization estimate={estimate} totals={totals} order={order} customer={customer} authorization={authorization} signature={signature} proofs={proofs} />
       </div>
       <aside className="min-w-0 space-y-4 rounded-card border border-border bg-surface p-5 sm:p-6 xl:sticky xl:top-24"><h2>{t("estimates.summary")}</h2><dl className="space-y-3">{(["parts_cents", "labor_cents", "materials_cents", "sublet_cents", "hazardous_waste_cents", "total_cents"] as const).map((key) => <div key={key} className={`flex flex-wrap justify-between gap-2 ${key === "total_cents" ? "border-t border-border pt-4 text-lg font-semibold" : ""}`}><dt>{t(`estimates.totals.${key}`)}</dt><dd className="font-mono">{formatMoney(totals?.[key] ?? 0)}</dd></div>)}</dl>
         <p className="text-sm text-secondary-foreground">{t("estimates.salesTax")}</p>

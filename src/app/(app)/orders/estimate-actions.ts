@@ -3,10 +3,15 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
+import { headers } from "next/headers";
+import { isIP } from "node:net";
+import { storeGeneratedDocument } from "@/lib/documents";
+import { signaturePng } from "@/lib/signature";
+import { freezePdf } from "@/lib/pdf/estimate-data";
 import { createClient } from "@/lib/supabase/server";
 import type { Database } from "@/lib/database.types";
 import { estimateEditable, orderError, orderEvent, type OrderResult } from "@/lib/orders";
-import { fieldErrors, estimateCreateSchema, estimateDetailsSchema, estimateSendSchema, estimateLineSchema, estimateCommandSchema, lineCommandSchema } from "@/lib/validation";
+import { fieldErrors, estimateCreateSchema, estimateDetailsSchema, estimateSendSchema, estimateLineSchema, estimateCommandSchema, lineCommandSchema, authorizationSchema, freezePdfSchema } from "@/lib/validation";
 
 async function context(orderId: string, estimateId: string) {
   if (!z.uuid().safeParse(orderId).success || !z.uuid().safeParse(estimateId).success) return null;
@@ -139,4 +144,57 @@ export async function changeEstimateStatus(input: unknown, details?: unknown): P
   const { error: activityError } = await ctx.supabase.from("activities").insert({ repair_order_id: orderId, customer_id: ctx.order.customer_id, kind: "system", body: orderEvent(command === "sent" ? "sentActivity" : command === "draft" ? "draftActivity" : "voidActivity", { kind: ctx.estimate.kind, seq: ctx.estimate.seq }) });
   refresh(orderId, estimateId, ctx.order.customer_id);
   return { ok: true, id: estimateId, ...(activityError ? { warning: "historySave" } : {}) };
+}
+
+export async function authorizeEstimate(input: unknown): Promise<OrderResult> {
+  const parsed = authorizationSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, fieldErrors: fieldErrors(parsed.error) };
+  const v = parsed.data;
+  const ctx = await context(v.orderId, v.estimateId);
+  if (!ctx) return { ok: false, error: "notFound" };
+  if (ctx.estimate.status !== "sent" || !estimateEditable(ctx.estimate)) return { ok: false, error: "estimateLocked" };
+  let signature_document_id: string | null = null;
+  let signer_ip: string | null = null, signer_user_agent: string | null = null;
+  if (v.method === "written") {
+    const bytes = signaturePng(v.signature ?? "");
+    if (!bytes) return { ok: false, fieldErrors: { signature: "signatureRequired" } };
+    try {
+      signature_document_id = (await storeGeneratedDocument(ctx.supabase, { shopId: ctx.order.shop_id, orderId: ctx.order.id, estimateId: ctx.estimate.id, kind: "signature", bytes, caption: v.authorizer_name })).id;
+    } catch (error) { return { ok: false, error: error instanceof Error ? error.message : "documentUpload" }; }
+    const h = await headers();
+    const ip = (h.get("x-nf-client-connection-ip") ?? h.get("x-forwarded-for")?.split(",")[0])?.trim();
+    signer_ip = ip && isIP(ip) ? ip : null;
+    signer_user_agent = h.get("user-agent")?.slice(0, 1000) ?? null;
+  }
+  // The trigger calculates amount_cents and content_sha256. Never send either.
+  const payload = {
+    estimate_id: ctx.estimate.id, method: v.method, decision: v.decision,
+    authorized_at: v.authorized_at, authorizer_name: v.authorizer_name,
+    phone_called: v.method === "oral" ? v.phone_called : null,
+    contact_email: v.method === "electronic" ? v.contact_email : null,
+    contact_phone: v.method === "electronic" ? v.contact_phone : null,
+    ...(v.method === "written" ? { signature_document_id, signer_ip, signer_user_agent } : {}),
+    return_parts_requested: v.decision === "approved" && v.return_parts_requested,
+  } as Database["public"]["Tables"]["authorizations"]["Insert"];
+  const { data, error } = await ctx.supabase.from("authorizations").insert(payload).select("id").single();
+  if (error || !data) return { ok: false, error: orderError(error) };
+  let warning: string | undefined;
+  try { await freezePdf(ctx.supabase, ctx.order.id, ctx.estimate.id); } catch { warning = "pdfPending"; }
+  const { error: activityError } = await ctx.supabase.from("activities").insert({ repair_order_id: ctx.order.id, customer_id: ctx.order.customer_id, kind: "system", body: orderEvent("authorizationActivity", { kind: ctx.estimate.kind, seq: ctx.estimate.seq, decision: v.decision, name: v.authorizer_name, method: v.method }) });
+  if (activityError && !warning) warning = "historySave";
+  refresh(ctx.order.id, ctx.estimate.id, ctx.order.customer_id);
+  return { ok: true, id: data.id, ...(warning ? { warning } : {}) };
+}
+
+export async function freezeEstimatePdf(input: unknown): Promise<OrderResult> {
+  const parsed = freezePdfSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, error: "notFound" };
+  const ctx = await context(parsed.data.orderId, parsed.data.estimateId);
+  if (!ctx) return { ok: false, error: "notFound" };
+  if (!ctx.estimate.locked_at || !["authorized", "declined"].includes(ctx.estimate.status)) return { ok: false, error: "authorizationRequired" };
+  try {
+    const id = await freezePdf(ctx.supabase, ctx.order.id, ctx.estimate.id);
+    refresh(ctx.order.id, ctx.estimate.id, ctx.order.customer_id);
+    return { ok: true, id };
+  } catch { return { ok: false, error: "pdfFailed" }; }
 }

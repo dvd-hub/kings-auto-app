@@ -7,7 +7,7 @@ export type Estimate = Database["public"]["Tables"]["estimates"]["Row"];
 export type EstimateLine = Database["public"]["Tables"]["estimate_lines"]["Row"];
 export type EstimateTotals = Database["public"]["Views"]["estimate_totals"]["Row"];
 export type OrderStatus = RepairOrder["status"];
-export type OrderResult = { ok: true; id: string; warning?: string } | { ok: false; error?: string; fieldErrors?: Record<string, string> };
+export type OrderResult = { ok: true; id: string; warning?: string } | { ok: false; error?: string; fieldErrors?: Record<string, string>; warning?: string };
 type Variant = "info" | "warning" | "success" | "danger" | "neutral";
 
 export const editableOrderStatuses = ["open", "in_progress", "completed", "delivered", "cancelled"] as const;
@@ -23,13 +23,14 @@ export function orderError(error: { code?: string; message?: string; details?: s
   const message = `${error?.message ?? ""} ${error?.details ?? ""}`;
   if (message.includes("is locked")) return "estimateLocked";
   if (message.includes("requires an authorization record")) return "authorizationRequired";
+  if (/already.*authoriz|already.*locked/i.test(message)) return "estimateLocked";
   if (error?.code === "23514") {
-    const constraints: Record<string, string> = { estimates_teardown_chk: "teardownFieldsRequired", estimates_third_party_chk: "thirdPartyFieldsRequired", estimates_parent_chk: "supplementNeedsParent", estimate_lines_crash_origin_chk: "crashOriginRequired", estimate_lines_part_required_chk: "partFieldsRequired" };
+    const constraints: Record<string, string> = { estimates_teardown_chk: "teardownFieldsRequired", estimates_third_party_chk: "thirdPartyFieldsRequired", estimates_parent_chk: "supplementNeedsParent", estimate_lines_crash_origin_chk: "crashOriginRequired", estimate_lines_part_required_chk: "partFieldsRequired", documents_path_chk: "documentPath", documents_hash_chk: "documentHash", documents_sha256_check: "documentHash", documents_size_bytes_check: "documentSize", documents_target_chk: "relatedNotFound", authorizations_written_chk: "signatureRequired", authorizations_written_only_chk: "authorizationInvalid", authorizations_oral_chk: "authorizationInvalid", authorizations_electronic_chk: "authorizationContact", authorizations_return_parts_chk: "authorizationInvalid", authorizations_authorizer_name_check: "authorizationName", authorizations_contact_email_check: "authorizationContact", authorizations_contact_phone_check: "authorizationContact", authorizations_phone_called_check: "authorizationContact", estimates_pdf_chk: "documentHash", estimates_pdf_sha256_check: "documentHash" };
     for (const [constraint, key] of Object.entries(constraints)) if (message.includes(constraint)) return key;
     return /repair_orders_/.test(message) ? "orderInvalid" : "rejectedByRules";
   }
   if (error?.code === "23503") return "relatedNotFound";
-  if (error?.code === "23505") return "duplicateOrderRecord";
+  if (error?.code === "23505") return message.includes("authorizations") ? "estimateLocked" : message.includes("documents") ? "duplicateDocument" : "duplicateOrderRecord";
   return "save";
 }
 
@@ -42,13 +43,19 @@ export function orderActivityText(body: string | null, t: Awaited<ReturnType<typ
   if (!body) return "";
   try {
     const event = JSON.parse(body);
-    const key = (["createdActivity", "statusActivity", "sentActivity", "voidActivity", "draftActivity"] as const).find((key) => key === event?.key);
+    const key = (["createdActivity", "statusActivity", "sentActivity", "voidActivity", "draftActivity", "authorizationActivity"] as const).find((key) => key === event?.key);
     if (event?.module === "orders" && key && event.values && Object.values(event.values).every((v) => typeof v === "string" || typeof v === "number")) {
       const values = { ...event.values };
       const status = Constants.public.Enums.ro_status.find((s) => s === values.status);
       const kind = Constants.public.Enums.estimate_kind.find((s) => s === values.kind);
       if (status) values.status = t(`ro_status.${status}`);
       if (kind) values.kind = t(`estimate_kind.${kind}`);
+      if (key === "authorizationActivity") {
+        const decision = (["approved", "declined"] as const).find((d) => d === values.decision);
+        const method = (["written", "oral", "electronic"] as const).find((m) => m === values.method);
+        if (decision) values.decision = t(`authorization.decision.${decision}`);
+        if (method) values.method = t(`authorization.method.${method}`);
+      }
       return t(`orders.${key}`, values);
     }
   } catch { /* User notes are plain text. */ }

@@ -243,3 +243,34 @@ export const orderStatusSchema = z.object({ id: z.uuid(), status: z.enum(["open"
 export const estimateCommandSchema = z.object({ orderId: z.uuid(), estimateId: z.uuid(), command: z.enum(["sent", "draft", "voided"]) });
 export const estimateCreateSchema = z.object({ orderId: z.uuid(), kind: z.enum(["teardown", "repair"]) });
 export const lineCommandSchema = z.object({ orderId: z.uuid(), estimateId: z.uuid(), lineId: z.uuid(), command: z.enum(["up", "down", "remove"]) });
+
+export const registerDocumentSchema = z.object({
+  repair_order_id: z.uuid(), estimate_id: z.uuid().optional(),
+  storage_path: z.string().min(1).max(500),
+  kind: z.enum(["photo", "third_party_estimate", "authorization_proof", "other"]),
+  caption: z.string().trim().max(1000).optional(),
+}).superRefine((v, ctx) => {
+  if ((v.kind === "third_party_estimate" || v.kind === "authorization_proof") && !v.estimate_id) ctx.addIssue({ code: "custom", path: ["estimate_id"], message: "required" });
+});
+export const documentEditSchema = z.object({ orderId: z.uuid(), documentId: z.uuid(), caption: z.string().trim().max(1000).optional(), remove: z.boolean().default(false) });
+export const attachPayorSchema = z.object({ orderId: z.uuid(), estimateId: z.uuid(), documentId: z.uuid() });
+export const freezePdfSchema = z.object({ orderId: z.uuid(), estimateId: z.uuid() });
+export const authorizationSchema = z.object({
+  orderId: z.uuid(), estimateId: z.uuid(),
+  decision: z.enum(["approved", "declined"]), method: z.enum(["written", "oral", "electronic"]),
+  authorizer_name: z.string().trim().min(1, "required").max(200),
+  authorized_at: z.string().transform((v, ctx) => {
+    if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(v)) { ctx.addIssue({ code: "custom", message: "invalidDate" }); return z.NEVER; }
+    const date = fromZonedTime(v, SHOP_TIMEZONE);
+    if (!Number.isFinite(date.getTime()) || formatInTimeZone(date, SHOP_TIMEZONE, "yyyy-MM-dd'T'HH:mm") !== v) { ctx.addIssue({ code: "custom", message: "invalidDate" }); return z.NEVER; }
+    if (date.getTime() > Date.now() || date.getTime() < Date.now() - 7 * 86400000) { ctx.addIssue({ code: "custom", message: "authorizationDateRange" }); return z.NEVER; }
+    return date.toISOString();
+  }),
+  phone_called: phone.prefault(""), contact_email: email.prefault(""), contact_phone: phone.prefault(""),
+  signature: z.string().max(700000).optional(),
+  return_parts_requested: z.boolean().default(false),
+}).superRefine((v, ctx) => {
+  if (v.method === "written" && (!v.signature || !/^data:image\/png;base64,[A-Za-z0-9+/]+=*$/.test(v.signature))) ctx.addIssue({ code: "custom", path: ["signature"], message: "signatureRequired" });
+  if (v.method === "electronic" && !v.contact_email && !v.contact_phone) ctx.addIssue({ code: "custom", path: ["contact_email"], message: "contactRequired" });
+  if (v.decision !== "approved" && v.return_parts_requested) ctx.addIssue({ code: "custom", path: ["return_parts_requested"], message: "rejectedByRules" });
+});

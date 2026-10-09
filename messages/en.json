@@ -89,7 +89,7 @@
     "relatedNotFound": "The related customer, vehicle or order was not found or was archived.",
     "orderPartiesLocked": "The customer and vehicle cannot change after an estimate leaves draft.",
     "orderClosed": "New estimates cannot be created for a cancelled or delivered order.",
-    "payorDocumentRequired": "Attach the insurer estimate (available soon) before sending.",
+    "payorDocumentRequired": "Attach the insurer estimate before marking this estimate as sent.",
     "epaRequired": "Add the shop EPA ID number in settings before charging a hazardous waste fee.",
     "estimateNeedsLines": "Add at least one estimate line before sending.",
     "teardownNeedsLines": "Add Tear down and Reassembly labor lines before sending.",
@@ -97,7 +97,22 @@
     "duplicateOrderRecord": "A record with this number already exists. Refresh and try again.",
     "historySave": "The changes were saved, but the history entry could not be recorded.",
     "odometerSave": "The order was saved, but the vehicle odometer could not be updated.",
-    "linePositionConflict": "The line positions changed or conflict. Refresh before moving lines again."
+    "linePositionConflict": "The line positions changed or conflict. Refresh before moving lines again.",
+    "documentRead": "Could not read the private document. Refresh the page and try again.",
+    "documentUpload": "The upload failed. The document was not registered.",
+    "documentOrphan": "The file was uploaded but could not be registered. It remains in Storage. Do not retry repeatedly; ask the workshop administrator to review it.",
+    "documentSize": "Each file must be nonempty and no larger than 25 MB.",
+    "documentMime": "Unsupported file type. Use JPEG, PNG, WebP, HEIC or PDF.",
+    "documentPath": "The file path does not belong to this order or the permitted folder.",
+    "documentHash": "The document integrity check failed.",
+    "documentProtected": "This document is attached to an estimate and cannot be removed. Replace the attachment on an editable estimate first.",
+    "signatureRequired": "A written authorization requires a customer signature.",
+    "authorizationInvalid": "The authorization information does not match the selected method or decision.",
+    "authorizationContact": "Check the authorization contact information.",
+    "authorizationName": "Enter the authorizer’s name.",
+    "pdfPending": "The customer decision was saved and the estimate is locked. Its signed PDF is pending. Select Generate signed PDF to finish.",
+    "pdfFailed": "The PDF could not be generated. Try Generate signed PDF again.",
+    "duplicateDocument": "This file is already registered. Do not upload it again."
   },
   "validation": {
     "required": "This field is required.",
@@ -122,7 +137,9 @@
     "crashOriginRequired": "Choose OEM or Non-OEM aftermarket for a crash part.",
     "vehicleNotOwned": "This vehicle does not belong to the selected customer.",
     "invalidRole": "Choose a teardown role that matches this line type.",
-    "tooLong": "This text is too long."
+    "tooLong": "This text is too long.",
+    "authorizationDateRange": "Use workshop time, no future date and no more than 7 days ago.",
+    "signatureRequired": "The customer must sign before saving."
   },
   "customerType": {
     "individual": "Individual",
@@ -415,7 +432,8 @@
     "statusActivity": "Repair order {ro} changed to {status}",
     "sentActivity": "{kind} {seq} sent",
     "voidActivity": "{kind} {seq} voided",
-    "draftActivity": "{kind} {seq} returned to draft"
+    "draftActivity": "{kind} {seq} returned to draft",
+    "authorizationActivity": "{kind} {seq} {decision} by {name} ({method})."
   },
   "estimates": {
     "markSent": "Mark as sent",
@@ -545,5 +563,65 @@
     "next": "Next",
     "openOriginal": "Open original",
     "close": "Close"
+  },
+  "documents": {
+    "title": "Photos & documents",
+    "addPhotos": "Add photos",
+    "addDocument": "Add document",
+    "limit": "Maximum 25 MB per file. JPEG, PNG, WebP, HEIC or PDF.",
+    "empty": "No photos or documents yet.",
+    "heic": "HEIC image · open file",
+    "file": "Document",
+    "viewer": "Photo or document",
+    "privateLink": "Private links expire after 10 minutes. Refresh the page to renew them.",
+    "openFile": "Open file",
+    "caption": "Caption / file name",
+    "remove": "Remove",
+    "removeConfirm": "Remove this item from the order? The stored file will be retained.",
+    "confirmRemove": "Confirm removal",
+    "keep": "Keep file",
+    "saved": "Document updated.",
+    "attachInsurer": "Attach insurer estimate",
+    "changeInsurer": "Change insurer estimate",
+    "upload": {
+      "waiting": "Waiting",
+      "uploading": "Uploading",
+      "registering": "Checking and registering",
+      "done": "Saved",
+      "failed": "Failed"
+    }
+  },
+  "authorization": {
+    "title": "Customer authorization",
+    "record": "Record authorization",
+    "decline": "Customer declined",
+    "previewPdf": "Preview PDF",
+    "downloadPdf": "Download signed PDF",
+    "generatePdf": "Generate signed PDF",
+    "pdfSaved": "Signed PDF saved.",
+    "saved": "Customer decision recorded.",
+    "review": "Review the estimate and record the customer’s decision.",
+    "methodLabel": "Authorization method",
+    "method": {
+      "written": "Written (signature)",
+      "oral": "Oral (phone or in person)",
+      "electronic": "Electronic (text or email)"
+    },
+    "decision": {
+      "approved": "Authorized",
+      "declined": "Declined"
+    },
+    "name": "Authorizer name",
+    "date": "Date and time · workshop time (Los Angeles)",
+    "signature": "Customer signature",
+    "clear": "Clear",
+    "phoneCalled": "Phone called (leave empty for in person)",
+    "email": "Contact email",
+    "phone": "Contact phone",
+    "returnParts": "Customer requests return of replaced parts",
+    "returnPartsHint": "Exchange or warranty parts cannot be returned; they may be shown to the customer.",
+    "proof": "Authorization proof",
+    "addProof": "Attach message screenshot (optional)",
+    "save": "Save customer decision"
   }
 }
