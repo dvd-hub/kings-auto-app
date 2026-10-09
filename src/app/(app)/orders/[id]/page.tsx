@@ -1,4 +1,7 @@
 import Link from "next/link";
+import { reassemblyDeadline } from "@/lib/orders";
+import { OrderPhase3b2 } from "@/components/orders/order-phase3b2";
+import { OrderAppointments } from "@/components/orders/order-appointments";
 import { notFound } from "next/navigation";
 import { z } from "zod";
 import { getT } from "@/i18n/server";
@@ -21,17 +24,21 @@ export default async function OrderPage({ params }: { params: Promise<{ id: stri
   const { data: order, error } = await supabase.from("repair_orders").select("*,customers(*),vehicles(*)").eq("id", id).is("deleted_at", null).maybeSingle();
   if (error) return <p role="alert">{t("errors.load")}</p>;
   if (!order) notFound();
-  const [estimatesResult, totalsResult, activitiesResult, docsResult, authResult] = await Promise.all([
+  const [estimatesResult, totalsResult, activitiesResult, docsResult, authResult, appointmentsResult, availableResult] = await Promise.all([
     supabase.from("estimates").select("*").eq("repair_order_id", id).is("deleted_at", null).order("created_at", { ascending: false }),
     supabase.from("estimate_totals").select("*").eq("repair_order_id", id),
     supabase.from("activities").select("*").eq("repair_order_id", id).is("deleted_at", null).order("occurred_at", { ascending: false }).limit(100),
     supabase.from("documents").select("*").eq("repair_order_id", id).is("deleted_at", null).in("kind", ["photo", "third_party_estimate", "authorization_proof", "other"]).order("created_at", { ascending: false }),
     supabase.from("authorizations").select("*,estimates!inner(repair_order_id)").eq("estimates.repair_order_id", id).is("deleted_at", null),
+    supabase.from("appointments").select("*").eq("repair_order_id", id).is("deleted_at", null).order("starts_at"),
+    supabase.from("appointments").select("*").eq("customer_id", order.customer_id).is("repair_order_id", null).is("deleted_at", null).neq("status", "cancelled").order("starts_at"),
   ]);
   const totals = new Map((totalsResult.data ?? []).map((row) => [row.estimate_id, row.total_cents]));
   const authorizations = new Map((authResult.data ?? []).map((row) => [row.estimate_id, row]));
   let documents: SignedDocument[] = [], loadFailed = Boolean(docsResult.error);
   try { documents = await signedDocuments(supabase, docsResult.data ?? []); } catch { loadFailed = true; }
+  const teardown = (estimatesResult.data ?? []).filter(e => e.kind === "teardown" && e.status === "authorized").sort((a, b) => (authorizations.get(b.id)?.authorized_at ?? "").localeCompare(authorizations.get(a.id)?.authorized_at ?? ""))[0];
+  const deadline = teardown && teardown.reassembly_max_days && authorizations.get(teardown.id)?.decision === "approved" ? reassemblyDeadline(authorizations.get(teardown.id)!.authorized_at, teardown.reassembly_max_days) : null;
   const customer = order.customers;
   const vehicle = order.vehicles;
   return <section className="space-y-6">
@@ -47,10 +54,12 @@ export default async function OrderPage({ params }: { params: Promise<{ id: stri
     </div>
     <div className="rounded-card border border-border bg-surface p-5 sm:p-6"><h2 className="mb-3">{t("orders.requestedRepairs")}</h2><p className="whitespace-pre-wrap break-words">{order.requested_repairs}</p></div>
     {order.notes && <div className="rounded-card border border-border bg-surface p-5 sm:p-6"><h2 className="mb-3">{t("orders.notes")}</h2><p className="whitespace-pre-wrap break-words">{order.notes}</p></div>}
+    {estimatesResult.error || authResult.error ? <p role="alert">{t("errors.load")}</p> : <OrderPhase3b2 order={order} teardownAuthorized={Boolean(teardown)} repairAuthorized={Boolean(estimatesResult.data?.some(e => e.kind === "repair" && e.status === "authorized"))} reassemblyDeadline={deadline} />}
+    <OrderAppointments order={order} customerName={customer ? customerName(customer) : ""} appointments={appointmentsResult.data ?? []} available={availableResult.data ?? []} loadFailed={Boolean(appointmentsResult.error || availableResult.error)} />
     <OrderDocuments orderId={id} shopId={order.shop_id} documents={documents} loadFailed={loadFailed} />
-    <div className="rounded-card border border-border bg-surface p-5 sm:p-6"><div className="mb-4 flex flex-wrap items-center justify-between gap-3"><h2>{t("orders.estimates")}</h2><NewEstimateButtons orderId={id} disabled={["cancelled", "delivered"].includes(order.status)} /></div>
+    <div className="rounded-card border border-border bg-surface p-5 sm:p-6"><div className="mb-4 flex flex-wrap items-center justify-between gap-3"><h2>{t("orders.estimates")}</h2><NewEstimateButtons orderId={id} disabled={["cancelled", "delivered", "total_loss"].includes(order.status)} /></div>
       {estimatesResult.error || totalsResult.error || authResult.error ? <p role="alert">{t("errors.load")}</p> : !estimatesResult.data?.length ? <p className="text-secondary-foreground">{t("orders.noEstimates")}</p> : <ul className="divide-y divide-border">{estimatesResult.data.map((estimate) => <li key={estimate.id}><Link href={`/orders/${id}/estimates/${estimate.id}`} className={`flex min-h-11 flex-wrap items-center justify-between gap-3 py-4 ${estimate.status === "voided" ? "line-through" : ""}`}>
-        <span className="font-semibold">{t(`estimate_kind.${estimate.kind}`)} {estimate.seq}</span><StatusBadge variant={estimateStatusVariants[estimate.status]} label={t(`estimate_status.${estimate.status}`)} /><span className="font-mono">{formatMoney(totals.get(estimate.id) ?? 0)}</span><span className="text-secondary-foreground">{formatDateTime(estimate.created_at)}</span>
+        <span className="font-semibold">{estimate.kind === "supplement" && estimatesResult.data?.find(p => p.id === estimate.parent_estimate_id) ? t("phase3b2.supplementTitle", { seq: estimate.seq, kind: t(`estimate_kind.${estimatesResult.data.find(p => p.id === estimate.parent_estimate_id)!.kind}`), parent: estimatesResult.data.find(p => p.id === estimate.parent_estimate_id)!.seq }) : <>{t(`estimate_kind.${estimate.kind}`)} {estimate.seq}</>}</span><StatusBadge variant={estimateStatusVariants[estimate.status]} label={t(`estimate_status.${estimate.status}`)} /><span className="font-mono">{formatMoney(totals.get(estimate.id) ?? 0)}</span><span className="text-secondary-foreground">{formatDateTime(estimate.created_at)}</span>
         {authorizations.get(estimate.id) && <span className="w-full text-sm text-secondary-foreground">{t(`authorization.method.${authorizations.get(estimate.id)!.method}`)} · {formatDateTime(authorizations.get(estimate.id)!.authorized_at)}</span>}
       </Link></li>)}</ul>}
     </div>

@@ -32,7 +32,7 @@ export default async function CalendarPage({ searchParams }: {
 
   const supabase = await createClient();
   const { data, error } = await supabase.from("appointments")
-    .select("id, type, status, source, title, notes, starts_at, ends_at, customer_id, vehicle_id, customers(id, type, first_name, last_name, company_name), vehicles(id, year, make, model, trim)")
+    .select("id, type, status, source, title, notes, starts_at, ends_at, customer_id, vehicle_id, repair_order_id, repair_orders(id, ro_number), customers(id, type, first_name, last_name, company_name), vehicles(id, year, make, model, trim)")
     .is("deleted_at", null).gte("starts_at", rangeStart.toISOString()).lt("starts_at", rangeEnd.toISOString())
     .order("starts_at");
 
@@ -50,7 +50,7 @@ export default async function CalendarPage({ searchParams }: {
       day, startMin, endMin: Math.max(endMin, startMin + 15),
       customerId: a.customer_id, customerName: a.customers ? customerName(a.customers) : null,
       vehicleLabel: a.vehicles ? vehicleLabel(a.vehicles) : null,
-      vehicleId: a.vehicle_id,
+      vehicleId: a.vehicle_id, repairOrderId: a.repair_order_id, roNumber: a.repair_orders?.ro_number ?? null,
     };
   });
 

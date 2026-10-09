@@ -104,6 +104,7 @@ export const appointmentSchema = z.object({
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "required"),
   time: z.string().regex(/^\d{2}:\d{2}$/, "required"),
   duration: z.coerce.number().int().min(5, "invalidNumber").max(24 * 60, "invalidNumber"),
+  repair_order_id: z.uuid().nullable().optional(),
   customer_id: z.uuid().nullable(),
   vehicle_id: z.uuid().nullable(),
   title: optionalText,
@@ -158,7 +159,7 @@ const moneyField = (max = Number.MAX_SAFE_INTEGER) => z.string().trim().transfor
 const boolChoice = z.enum(["", "true", "false"], { message: "required" }).transform((v) => v === "" ? null : v === "true");
 
 export const estimateDetailsSchema = z.object({
-  kind: z.enum(["teardown", "repair"]),
+  kind: z.enum(["teardown", "repair", "supplement"]),
   basis: z.enum(Constants.public.Enums.estimate_basis, { message: "required" }),
   teardown_area: optionalText,
   teardown_may_prevent_restoration: boolChoice,
@@ -172,7 +173,7 @@ export const estimateDetailsSchema = z.object({
   if (!value.payor_name && (value.payor_claim_number || value.payor_approved_amount_cents !== null)) ctx.addIssue({ code: "custom", path: ["payor_name"], message: "required" });
 }).transform((value) => {
   const { kind, ...fields } = value;
-  if (kind === "repair") {
+  if (kind !== "teardown") {
     const { teardown_area: _area, teardown_may_prevent_restoration: _prevent, reassembly_max_days: _days, pickup_deadline_days: _pickup, ...repair } = fields;
     void _area; void _prevent; void _days; void _pickup;
     return { kind, ...repair };
@@ -195,7 +196,7 @@ export const estimateSendSchema = estimateDetailsSchema.superRefine((value, ctx)
 
 const optionalEnum = <T extends readonly [string, ...string[]]>(values: T) => z.union([z.enum(values), z.literal("")]).transform((v) => v || null);
 export const estimateLineSchema = z.object({
-  kind: z.enum(["teardown", "repair"]),
+  kind: z.enum(["teardown", "repair", "supplement"]),
   line_type: z.enum(Constants.public.Enums.estimate_line_type, { message: "required" }),
   description: z.string().trim().min(1, "required").max(5000, "tooLong"),
   quantity: z.string().trim().regex(/^\d+(?:\.\d{1,2})?$/, "invalidQuantity").transform(Number).refine((n) => n > 0 && n <= 99_999_999.99, "invalidQuantity"),
@@ -213,6 +214,7 @@ export const estimateLineSchema = z.object({
   sublet_vendor_address: optionalText,
   teardown_role: optionalEnum(Constants.public.Enums.teardown_role),
 }).superRefine((v, ctx) => {
+  if (v.kind !== "teardown" && v.teardown_role) ctx.addIssue({ code: "custom", path: ["teardown_role"], message: "invalidRole" });
   if (v.line_type === "part") {
     if (!v.part_condition) ctx.addIssue({ code: "custom", path: ["part_condition"], message: "required" });
     if (v.is_crash_part === null) ctx.addIssue({ code: "custom", path: ["is_crash_part"], message: "required" });
@@ -235,13 +237,15 @@ export const estimateLineSchema = z.object({
   paint_materials_method: v.line_type === "paint_materials" ? v.paint_materials_method : null,
   sublet_vendor_name: v.line_type === "sublet" ? v.sublet_vendor_name : null,
   sublet_vendor_address: v.line_type === "sublet" ? v.sublet_vendor_address : null,
-  ...(kind === "teardown" ? { teardown_role } : {}),
+  teardown_role: kind === "teardown" ? teardown_role : null,
 }));
 
 export const orderActivitySchema = z.object({ repair_order_id: z.uuid(), kind: z.enum(["note", "call"], { message: "required" }), body: z.string().trim().min(1, "required").max(5000, "tooLong") });
 export const orderStatusSchema = z.object({ id: z.uuid(), status: z.enum(["open", "in_progress", "completed", "delivered", "cancelled"]) });
 export const estimateCommandSchema = z.object({ orderId: z.uuid(), estimateId: z.uuid(), command: z.enum(["sent", "draft", "voided"]) });
-export const estimateCreateSchema = z.object({ orderId: z.uuid(), kind: z.enum(["teardown", "repair"]) });
+export const estimateCreateSchema = z.object({ orderId: z.uuid(), kind: z.enum(["teardown", "repair", "supplement"]), parentEstimateId: z.uuid().optional() }).superRefine((v, ctx) => {
+  if ((v.kind === "supplement") !== Boolean(v.parentEstimateId)) ctx.addIssue({ code: "custom", path: ["parentEstimateId"], message: "supplementParentInvalid" });
+});
 export const lineCommandSchema = z.object({ orderId: z.uuid(), estimateId: z.uuid(), lineId: z.uuid(), command: z.enum(["up", "down", "remove"]) });
 
 export const registerDocumentSchema = z.object({
@@ -257,6 +261,7 @@ export const attachPayorSchema = z.object({ orderId: z.uuid(), estimateId: z.uui
 export const freezePdfSchema = z.object({ orderId: z.uuid(), estimateId: z.uuid() });
 export const authorizationSchema = z.object({
   orderId: z.uuid(), estimateId: z.uuid(),
+  by_designee: z.boolean().default(false),
   decision: z.enum(["approved", "declined"]), method: z.enum(["written", "oral", "electronic"]),
   authorizer_name: z.string().trim().min(1, "required").max(200),
   authorized_at: z.string().transform((v, ctx) => {
@@ -273,4 +278,18 @@ export const authorizationSchema = z.object({
   if (v.method === "written" && (!v.signature || !/^data:image\/png;base64,[A-Za-z0-9+/]+=*$/.test(v.signature))) ctx.addIssue({ code: "custom", path: ["signature"], message: "signatureRequired" });
   if (v.method === "electronic" && !v.contact_email && !v.contact_phone) ctx.addIssue({ code: "custom", path: ["contact_email"], message: "contactRequired" });
   if (v.decision !== "approved" && v.return_parts_requested) ctx.addIssue({ code: "custom", path: ["return_parts_requested"], message: "rejectedByRules" });
+});
+
+export const orderCommandSchema = z.object({ orderId: z.uuid(), command: z.enum(["total_loss", "pickup_notified"]) });
+export const teardownOutcomeSchema = z.object({ orderId: z.uuid(), outcome: z.enum(["repair", "reassemble", "declined_reassembly"]) });
+export const payorNotificationSchema = z.object({ orderId: z.uuid(), estimateId: z.uuid() });
+export const appointmentLinkSchema = z.object({ orderId: z.uuid(), appointmentId: z.uuid(), unlink: z.boolean().default(false) });
+export const designeeSchema = z.object({
+  orderId: z.uuid(), designee_name: z.string().trim().min(1, "required").max(200),
+  designee_phone: phone.prefault(""), designee_email: email.prefault(""),
+  designee_signed_at: shopDateTime(true).pipe(z.string()).refine(v => new Date(v).getTime() <= Date.now(), "invalidDate"),
+  signature: z.string().max(700000), confirmed: z.literal(true, { message: "required" }),
+}).superRefine((v, ctx) => {
+  if (!v.designee_phone && !v.designee_email) ctx.addIssue({ code: "custom", path: ["designee_phone"], message: "contactRequired" });
+  if (!/^data:image\/png;base64,[A-Za-z0-9+/]+=*$/.test(v.signature)) ctx.addIssue({ code: "custom", path: ["signature"], message: "signatureRequired" });
 });

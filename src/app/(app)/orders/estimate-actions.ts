@@ -33,16 +33,23 @@ function refresh(orderId: string, estimateId: string, customerId: string) {
 
 export async function createEstimate(input: unknown): Promise<OrderResult> {
   const parsed = estimateCreateSchema.safeParse(input);
-  if (!parsed.success) return { ok: false, error: "notFound" };
+  if (!parsed.success) return { ok: false, error: parsed.error.issues.some(issue => issue.message === "supplementParentInvalid") ? "supplementParentInvalid" : "notFound" };
   const supabase = await createClient();
   if (!(await supabase.auth.getUser()).data.user) return { ok: false, error: "notFound" };
   const { data: order } = await supabase.from("repair_orders").select("id,status,customer_id").eq("id", parsed.data.orderId).is("deleted_at", null).maybeSingle();
   if (!order) return { ok: false, error: "notFound" };
-  if (["cancelled", "delivered"].includes(order.status)) return { ok: false, error: "orderClosed" };
+  if (["cancelled", "delivered", "total_loss"].includes(order.status)) return { ok: false, error: "orderClosed" };
   // BEFORE INSERT estimates_seq assigns seq; omit it despite the generated Insert type.
-  const payload = { repair_order_id: order.id, kind: parsed.data.kind } as Database["public"]["Tables"]["estimates"]["Insert"];
+  let parent: { id: string; payor_name: string | null; payor_claim_number: string | null } | null = null;
+  if (parsed.data.kind === "supplement") {
+    const { data, error } = await supabase.from("estimates").select("id,payor_name,payor_claim_number").eq("id", parsed.data.parentEstimateId!).eq("repair_order_id", order.id).in("kind", ["repair", "supplement"]).eq("status", "authorized").is("deleted_at", null).maybeSingle();
+    if (error || !data) return { ok: false, error: "supplementParentInvalid" };
+    parent = data;
+  }
+  const payload = { repair_order_id: order.id, kind: parsed.data.kind, ...(parent ? { parent_estimate_id: parent.id, payor_name: parent.payor_name, payor_claim_number: parent.payor_claim_number, basis: "shop" } : {}) } as Database["public"]["Tables"]["estimates"]["Insert"];
   const { data, error } = await supabase.from("estimates").insert(payload).select("id").single();
   if (error || !data) return { ok: false, error: orderError(error) };
+  if (parent) await supabase.from("activities").insert({ repair_order_id: order.id, customer_id: order.customer_id, kind: "system", body: orderEvent("supplementCreatedActivity", {}) });
   refresh(order.id, data.id, order.customer_id);
   redirect(`/orders/${order.id}/estimates/${data.id}`);
 }
@@ -152,6 +159,14 @@ export async function authorizeEstimate(input: unknown): Promise<OrderResult> {
   const v = parsed.data;
   const ctx = await context(v.orderId, v.estimateId);
   if (!ctx) return { ok: false, error: "notFound" };
+  if (v.by_designee) {
+    if (ctx.estimate.kind !== "supplement" || !ctx.order.designee_signed_at || !ctx.order.designee_signature_document_id || !ctx.order.designee_name) return { ok: false, error: "designeeNotAllowed" };
+    if (new Date(v.authorized_at) < new Date(ctx.order.designee_signed_at)) return { ok: false, error: "designeeNotAllowed" };
+    v.authorizer_name = ctx.order.designee_name;
+    v.phone_called = ctx.order.designee_phone;
+    v.contact_phone = ctx.order.designee_phone;
+    v.contact_email = ctx.order.designee_email;
+  }
   if (ctx.estimate.status !== "sent" || !estimateEditable(ctx.estimate)) return { ok: false, error: "estimateLocked" };
   let signature_document_id: string | null = null;
   let signer_ip: string | null = null, signer_user_agent: string | null = null;
@@ -169,7 +184,7 @@ export async function authorizeEstimate(input: unknown): Promise<OrderResult> {
   // The trigger calculates amount_cents and content_sha256. Never send either.
   const payload = {
     estimate_id: ctx.estimate.id, method: v.method, decision: v.decision,
-    authorized_at: v.authorized_at, authorizer_name: v.authorizer_name,
+    authorized_at: v.authorized_at, authorizer_name: v.authorizer_name, by_designee: v.by_designee,
     phone_called: v.method === "oral" ? v.phone_called : null,
     contact_email: v.method === "electronic" ? v.contact_email : null,
     contact_phone: v.method === "electronic" ? v.contact_phone : null,

@@ -36,6 +36,11 @@ App interna de gestión para Kings Auto Collision Inc., taller de carrocería, p
 - Tipos de presupuesto: `teardown` (desmontaje), `repair` y `supplement`. Las restricciones de la base de datos reflejan la normativa de la BAR: valida en zod antes para dar mensajes claros.
 - Un clásico es una orden de tipo `classic` con fases; no hay un sistema de presupuestos aparte.
 - El impuesto se calcula por línea según `taxable`. No asumas qué tributa.
+- Suplementos: el padre debe ser una reparación o suplemento autorizado de la misma orden. Cada suplemento tiene su autorización propia; muestra el total aprobado de la cadena anterior, el importe adicional y el nuevo total. Sin `teardown_role`. El aviso a la aseguradora (`payor_notified_at`) se registra una sola vez.
+- Persona designada: firma del cliente y contacto obligatorio; solo puede autorizar suplementos (`by_designee`). Una vez firmada no se cambia ni se cambia el cliente o vehículo de la orden. Firma sin `estimate_id`; copia en `/orders/[id]/designation/pdf`.
+- Resultado del desmontaje: definitivo, exige desmontaje autorizado; `repair` exige reparación autorizada. Guarda resultado y fecha juntos. Plazo de remontaje desde la autorización del desmontaje, en días de la hora del taller.
+- Pérdida total: solo desde `open` o `in_progress`, con `total_loss_at`; no aparece en `editableOrderStatuses` y oculta el selector. Aviso de recogida en `completed` o `total_loss`, una sola vez; sin aviso no se puede cobrar almacenaje.
+- Citas enlazadas: `appointments.repair_order_id`, mismo cliente que la orden. No cambies el cliente de una orden con citas enlazadas no borradas; al crear, enlazar o quitar enlace registra actividad y revalida orden y calendario.
 
 ## Formato y zona horaria
 

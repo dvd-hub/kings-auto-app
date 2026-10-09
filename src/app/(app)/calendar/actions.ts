@@ -6,10 +6,11 @@ import { fromZonedTime, formatInTimeZone } from "date-fns-tz";
 import { createClient } from "@/lib/supabase/server";
 import { getT } from "@/i18n/server";
 import { SHOP_TIMEZONE } from "@/lib/config";
+import { orderError, orderEvent } from "@/lib/orders";
 import { appointmentSchema, fieldErrors, type FieldErrors } from "@/lib/validation";
 import { getWebRequestDetail, type WebRequestDetail } from "@/lib/web-requests";
 
-export type AppointmentResult = { ok: true; id: string } | { ok: false; error?: string; fieldErrors?: FieldErrors };
+export type AppointmentResult = { ok: true; id: string; warning?: string } | { ok: false; error?: string; fieldErrors?: FieldErrors };
 
 const webRequestSchema = z.object({ appointmentId: z.uuid() });
 
@@ -35,6 +36,12 @@ async function prepare(input: unknown): Promise<Prepared> {
   const a = parsed.data;
   const supabase = await createClient();
 
+  if (!(await supabase.auth.getUser()).data.user) return { ok: false, result: { ok: false, error: "notFound" } };
+  if (a.repair_order_id) {
+    const { data: order } = await supabase.from("repair_orders").select("customer_id").eq("id", a.repair_order_id).is("deleted_at", null).maybeSingle();
+    if (!order) return { ok: false, result: { ok: false, error: "notFound" } };
+    if (order.customer_id !== a.customer_id) return { ok: false, result: { ok: false, error: "appointmentCustomerMismatch" } };
+  }
   if (a.customer_id) {
     const { data } = await supabase.from("customers").select("id").eq("id", a.customer_id).is("deleted_at", null).maybeSingle();
     if (!data) return { ok: false, result: { ok: false, fieldErrors: { customer_id: "required" } } };
@@ -61,8 +68,9 @@ export async function createAppointment(input: unknown): Promise<AppointmentResu
   const { data: row, error } = await supabase.from("appointments").insert({
     type: a.type, starts_at: startsAt.toISOString(), ends_at: endsAt.toISOString(),
     customer_id: a.customer_id, vehicle_id: a.vehicle_id, title: a.title, notes: a.notes,
+    ...(a.repair_order_id ? { repair_order_id: a.repair_order_id } : {}),
   }).select("id").single();
-  if (error || !row) return { ok: false, error: "save" };
+  if (error || !row) return { ok: false, error: orderError(error) };
 
   if (a.customer_id) {
     const t = await getT();
@@ -71,6 +79,11 @@ export async function createAppointment(input: unknown): Promise<AppointmentResu
       body: t("calendar.activityScheduled", { when: shortWhen(startsAt) }),
     });
     revalidatePath(`/customers/${a.customer_id}`);
+  }
+  if (a.repair_order_id) {
+    const { error: historyError } = await supabase.from("activities").insert({ kind: "system", repair_order_id: a.repair_order_id, appointment_id: row.id, customer_id: a.customer_id, vehicle_id: a.vehicle_id, body: orderEvent("appointmentCreatedActivity", {}) });
+    revalidatePath(`/orders/${a.repair_order_id}`);
+    if (historyError) { revalidatePath("/calendar"); return { ok: true, id: row.id, warning: "historySave" }; }
   }
   revalidatePath("/calendar");
   return { ok: true, id: row.id };
@@ -89,9 +102,10 @@ export async function setAppointmentStatus(input: unknown): Promise<AppointmentR
     .eq("id", parsed.data.id).is("deleted_at", null);
   // Check the current status in the update itself so a concurrent change cannot confirm it twice.
   if (parsed.data.status === "scheduled") query = query.eq("status", "requested");
-  const { data: row, error } = await query.select("id, customer_id, vehicle_id").single();
+  const { data: row, error } = await query.select("id, customer_id, vehicle_id, repair_order_id").single();
   if (error || !row) return { ok: false, error: "save" };
 
+  if (row.repair_order_id) revalidatePath(`/orders/${row.repair_order_id}`);
   if (row.customer_id) {
     const t = await getT();
     await supabase.from("activities").insert({
@@ -110,15 +124,19 @@ export async function updateAppointment(id: string, input: unknown): Promise<App
   if (!prepared.ok) return prepared.result;
   const { supabase, a, startsAt, endsAt } = prepared;
 
-  const { data: current } = await supabase.from("appointments").select("id, status, starts_at, customer_id")
+  const { data: current } = await supabase.from("appointments").select("id, status, starts_at, customer_id, repair_order_id, updated_at")
     .eq("id", id).is("deleted_at", null).maybeSingle();
   if (!current) return { ok: false, error: "notFound" };
+  if (current.repair_order_id) {
+    const { data: order } = await supabase.from("repair_orders").select("customer_id").eq("id", current.repair_order_id).is("deleted_at", null).maybeSingle();
+    if (!order || order.customer_id !== a.customer_id) return { ok: false, error: "appointmentCustomerMismatch" };
+  }
   if (current.status !== "scheduled" && current.status !== "requested") return { ok: false, error: "notEditable" };
 
   const { data: row, error } = await supabase.from("appointments").update({
     type: a.type, starts_at: startsAt.toISOString(), ends_at: endsAt.toISOString(),
     customer_id: a.customer_id, vehicle_id: a.vehicle_id, title: a.title, notes: a.notes,
-  }).eq("id", id).eq("status", current.status).is("deleted_at", null).select("id").single();
+  }).eq("id", id).eq("status", current.status).eq("updated_at", current.updated_at).is("deleted_at", null).select("id").single();
   if (error || !row) return { ok: false, error: "save" };
 
   if (new Date(current.starts_at).getTime() !== startsAt.getTime()) {
@@ -128,6 +146,7 @@ export async function updateAppointment(id: string, input: unknown): Promise<App
       body: t("calendar.activityRescheduled", { from: shortWhen(current.starts_at), to: shortWhen(startsAt) }),
     });
   }
+  if (current.repair_order_id) revalidatePath(`/orders/${current.repair_order_id}`);
   for (const customerId of new Set([current.customer_id, a.customer_id])) if (customerId) revalidatePath(`/customers/${customerId}`);
   revalidatePath("/calendar");
   return { ok: true, id: row.id };

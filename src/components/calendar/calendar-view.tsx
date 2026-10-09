@@ -16,7 +16,7 @@ import { WebRequestPanel } from "@/components/calendar/web-request-panel";
 import { setAppointmentStatus } from "@/app/(app)/calendar/actions";
 import { appointmentBlockClass, appointmentStatusVariant, appointmentTypeVariant } from "@/lib/appointments";
 import type { Database } from "@/lib/database.types";
-import { formatDate, formatDateTime, formatTime } from "@/lib/format";
+import { formatDate, formatDateTime, formatTime, formatRoNumber } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 export type CalendarViewName = "day" | "week" | "month";
@@ -25,6 +25,7 @@ export type CalendarAppointment = {
   source: Database["public"]["Tables"]["appointments"]["Row"]["source"];
   title: string | null; notes: string | null; startsAt: string; endsAt: string;
   day: string; startMin: number; endMin: number;
+  repairOrderId: string | null; roNumber: number | null;
   customerId: string | null; customerName: string | null; vehicleLabel: string | null; vehicleId: string | null;
 };
 
@@ -74,6 +75,7 @@ export function CalendarView(props: {
   const edit = (a: CalendarAppointment) => setDraft({
     date: formatInTimeZone(a.startsAt, SHOP_TIMEZONE, "yyyy-MM-dd"), time: formatInTimeZone(a.startsAt, SHOP_TIMEZONE, "HH:mm"),
     customer: a.customerId ? { id: a.customerId, name: a.customerName ?? "" } : null,
+    repairOrderId: a.repairOrderId ?? undefined,
     existing: {
       id: a.id, type: a.type, duration: Math.round((new Date(a.endsAt).getTime() - new Date(a.startsAt).getTime()) / 60_000),
       vehicleId: a.vehicleId, title: a.title, notes: a.notes,
@@ -219,6 +221,7 @@ function AppointmentDetail({ appointment: a, onClose, onEdit }: { appointment: C
           </div>
           <p className={cn("font-semibold", a.status === "cancelled" && "line-through text-secondary-foreground")}>{formatDateTime(a.startsAt)} – {formatTime(a.endsAt)}</p>
           {a.customerName && <p>{t("customer")}: <Link href={`/customers/${a.customerId}`} className="inline-flex min-h-11 items-center font-semibold text-link underline hover:text-link-hover">{a.customerName}</Link></p>}
+          {a.repairOrderId && a.roNumber !== null && <p><Link href={`/orders/${a.repairOrderId}`} className="inline-flex min-h-11 items-center font-mono text-link underline">{formatRoNumber(a.roNumber)}</Link></p>}
           {a.vehicleLabel && <p>{t("vehicle")}: {a.vehicleLabel}</p>}
           {a.notes && <p className="whitespace-pre-wrap break-words text-secondary-foreground">{a.notes}</p>}
           {a.source === "web" && <WebRequestPanel key={a.id} appointmentId={a.id} />}

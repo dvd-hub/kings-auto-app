@@ -27,6 +27,7 @@ export function OrderStatusSelector({ id, status }: { id: string; status: OrderS
       router.refresh();
     });
   }
+  if (status === "total_loss") return null;
   return <>
     <DropdownMenu><DropdownMenuTrigger asChild><Button variant="outline" disabled={pending}>{t("orders.changeStatus")}</Button></DropdownMenuTrigger>
       <DropdownMenuContent>{editableOrderStatuses.map((value) => <DropdownMenuItem key={value} className="min-h-11" disabled={value === status} onSelect={() => value === "cancelled" ? setConfirm(true) : change(value)}>{t(`ro_status.${value}`)}</DropdownMenuItem>)}</DropdownMenuContent>

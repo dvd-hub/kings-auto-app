@@ -13,16 +13,20 @@ import { Field, Select, fieldAria } from "@/components/form-field";
 import { LineEditor } from "@/components/orders/line-editor";
 import { DocumentUpload } from "@/components/orders/document-upload";
 import { EstimateAuthorization } from "@/components/orders/estimate-authorization";
+import type { SupplementContext } from "@/lib/supplements";
+import type { RepairOrder } from "@/lib/orders";
+import { createEstimate } from "@/app/(app)/orders/estimate-actions";
+import { notifyPayor } from "@/app/(app)/orders/phase3b2-actions";
 import type { SignedDocument, Authorization } from "@/lib/document-shared";
 import { attachPayorDocument } from "@/app/(app)/orders/document-actions";
 import { estimateEditable, estimateStatusVariants, type Estimate, type EstimateLine, type EstimateTotals, type OrderResult } from "@/lib/orders";
-import { formatMoney, formatRoNumber, parseMoneyToCents } from "@/lib/format";
+import { formatMoney, formatDateTime, formatRoNumber, parseMoneyToCents } from "@/lib/format";
 import type { FieldErrors } from "@/lib/validation";
 import { saveEstimateDetails, changeEstimateStatus, changeEstimateLine } from "@/app/(app)/orders/estimate-actions";
 
 type Values = { basis: string; teardown_area: string; teardown_may_prevent_restoration: string; reassembly_max_days: string; pickup_deadline_days: string; payor_name: string; payor_claim_number: string; payor_estimate_total_cents: string; payor_approved_amount_cents: string };
 
-export function EstimateBuilder({ estimate, lines, totals, order, customer, epaAvailable, payorDocument, authorization, signature, proofs }: { estimate: Estimate; lines: EstimateLine[]; totals: EstimateTotals | null; order: { id: string; ro_number: number; shop_id: string }; customer: { id: string; name: string; phone: string | null; email: string | null }; epaAvailable: boolean; payorDocument: SignedDocument | null; authorization: Authorization | null; signature: SignedDocument | null; proofs: SignedDocument[] }) {
+export function EstimateBuilder({ supplement, estimate, lines, totals, order, customer, epaAvailable, payorDocument, authorization, signature, proofs }: { supplement: SupplementContext | null; estimate: Estimate; lines: EstimateLine[]; totals: EstimateTotals | null; order: RepairOrder; customer: { id: string; name: string; phone: string | null; email: string | null }; epaAvailable: boolean; payorDocument: SignedDocument | null; authorization: Authorization | null; signature: SignedDocument | null; proofs: SignedDocument[] }) {
   const t = useTranslations();
   const locale = useLocale();
   const editable = estimateEditable(estimate);
@@ -49,9 +53,12 @@ export function EstimateBuilder({ estimate, lines, totals, order, customer, epaA
     start(async () => { handle(await changeEstimateLine({ orderId: order.id, estimateId: estimate.id, lineId, command: value }), t("estimates.lineSaved")); });
   }
   return <section className="min-w-0 space-y-6">
-    <div className="flex flex-wrap items-start justify-between gap-3"><div><h1 className={estimate.status === "voided" ? "line-through" : ""}>{t(`estimate_kind.${estimate.kind}`)} {estimate.seq}</h1><div className="mt-2 flex flex-wrap items-center gap-3"><StatusBadge variant={estimateStatusVariants[estimate.status]} label={t(`estimate_status.${estimate.status}`)} /><Link href={`/orders/${order.id}`} className="inline-flex min-h-11 items-center font-mono text-link underline">{formatRoNumber(order.ro_number)}</Link><Link href={`/customers/${customer.id}`} className="inline-flex min-h-11 items-center text-link underline">{customer.name}</Link></div></div>
+    <div className="flex flex-wrap items-start justify-between gap-3"><div><h1 className={estimate.status === "voided" ? "line-through" : ""}>{supplement ? t("phase3b2.supplementTitle", { seq: estimate.seq, kind: t(`estimate_kind.${supplement.parent.kind}`), parent: supplement.parent.seq }) : <>{t(`estimate_kind.${estimate.kind}`)} {estimate.seq}</>}</h1><div className="mt-2 flex flex-wrap items-center gap-3"><StatusBadge variant={estimateStatusVariants[estimate.status]} label={t(`estimate_status.${estimate.status}`)} /><Link href={`/orders/${order.id}`} className="inline-flex min-h-11 items-center font-mono text-link underline">{formatRoNumber(order.ro_number)}</Link><Link href={`/customers/${customer.id}`} className="inline-flex min-h-11 items-center text-link underline">{customer.name}</Link></div></div>
+      {estimate.status === "authorized" && ["repair", "supplement"].includes(estimate.kind) && !["cancelled", "delivered", "total_loss"].includes(order.status) && <Button variant="outline" disabled={pending} onClick={() => start(async () => { const result = await createEstimate({ orderId: order.id, kind: "supplement", parentEstimateId: estimate.id }); if (!result.ok) handle(result, ""); })}>{t("phase3b2.newSupplement")}</Button>}
       {editable && <div className="flex flex-wrap gap-2">{estimate.status === "draft" ? <Button disabled={pending || blockedThirdParty} onClick={() => command("sent")}>{t("estimates.markSent")}</Button> : <Button variant="outline" disabled={pending} onClick={() => command("draft")}>{t("estimates.backDraft")}</Button>}<Button variant="outline" disabled={pending} onClick={() => setVoidOpen(true)}>{t("estimates.void")}</Button></div>}
     </div>
+    {supplement && <div className="grid gap-3 rounded-card border border-border bg-surface p-5 sm:grid-cols-3">{[["authorizedBefore", supplement.authorizedBefore], ["supplementAmount", totals?.total_cents ?? 0], ["revisedTotal", supplement.authorizedBefore + (totals?.total_cents ?? 0)]].map(([key, amount]) => <div key={key}><p>{t(`phase3b2.${key}`)}</p><p className="font-mono font-semibold">{formatMoney(Number(amount))}</p></div>)}</div>}
+    {estimate.kind === "supplement" && estimate.status === "authorized" && estimate.payor_name && <div className="space-y-2 rounded-control bg-status-warning-bg p-4 text-status-warning-text">{estimate.payor_notified_at ? <p>{t("phase3b2.payorNotifiedAt", { when: formatDateTime(estimate.payor_notified_at) })}</p> : <><p>{t("phase3b2.notifyPayor")}</p><Button variant="outline" disabled={pending} onClick={() => start(async () => { handle(await notifyPayor({ orderId: order.id, estimateId: estimate.id }), t("phase3b2.saved")); })}>{t("phase3b2.payorNotified")}</Button></>}</div>}
     {!editable && <p className="rounded-control bg-status-warning-bg p-4 text-status-warning-text">{t("estimates.locked")}</p>}
     <div className="grid min-w-0 items-start gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(280px,340px)]">
       <div className="min-w-0 space-y-6">
@@ -78,14 +85,14 @@ export function EstimateBuilder({ estimate, lines, totals, order, customer, epaA
             {editable && <div className="flex flex-wrap gap-2"><Button variant="outline" disabled={pending} onClick={() => setEditor(line)}>{t("common.edit")}</Button><Button variant="outline" className="min-h-11 min-w-11 px-3" aria-label={t("estimates.moveUp", { description: line.description })} disabled={pending || index === 0} onClick={() => changeLine(line.id, "up")}><ArrowUp className="size-4" /></Button><Button variant="outline" className="min-h-11 min-w-11 px-3" aria-label={t("estimates.moveDown", { description: line.description })} disabled={pending || index === lines.length - 1} onClick={() => changeLine(line.id, "down")}><ArrowDown className="size-4" /></Button><Button variant="outline" disabled={pending} onClick={() => changeLine(line.id, "remove")}>{t("estimates.remove")}</Button></div>}
           </li>)}</ol>
         </div>
-        <EstimateAuthorization estimate={estimate} totals={totals} order={order} customer={customer} authorization={authorization} signature={signature} proofs={proofs} />
+        <EstimateAuthorization supplement={supplement} estimate={estimate} totals={totals} order={order} customer={customer} authorization={authorization} signature={signature} proofs={proofs} />
       </div>
       <aside className="min-w-0 space-y-4 rounded-card border border-border bg-surface p-5 sm:p-6 xl:sticky xl:top-24"><h2>{t("estimates.summary")}</h2><dl className="space-y-3">{(["parts_cents", "labor_cents", "materials_cents", "sublet_cents", "hazardous_waste_cents", "total_cents"] as const).map((key) => <div key={key} className={`flex flex-wrap justify-between gap-2 ${key === "total_cents" ? "border-t border-border pt-4 text-lg font-semibold" : ""}`}><dt>{t(`estimates.totals.${key}`)}</dt><dd className="font-mono">{formatMoney(totals?.[key] ?? 0)}</dd></div>)}</dl>
         <p className="text-sm text-secondary-foreground">{t("estimates.salesTax")}</p>
         {legal && <div className="space-y-3 border-t border-border pt-4 text-sm"><p lang="en">{t("estimates.payorLegal")}</p>{locale === "es" && <><p className="font-semibold">{t("estimates.informationalTranslation")}</p><p>{t("estimates.payorLegalTranslation")}</p></>}</div>}
       </aside>
     </div>
-    {editor && editable && estimate.kind !== "supplement" && <LineEditor key={editor === "new" ? "new" : editor.id} orderId={order.id} estimateId={estimate.id} kind={estimate.kind} line={editor === "new" ? null : editor} epaAvailable={epaAvailable} onClose={() => setEditor(null)} />}
+    {editor && editable && <LineEditor key={editor === "new" ? "new" : editor.id} orderId={order.id} estimateId={estimate.id} kind={estimate.kind} line={editor === "new" ? null : editor} epaAvailable={epaAvailable} onClose={() => setEditor(null)} />}
     <Dialog open={voidOpen} onOpenChange={setVoidOpen}><DialogContent showCloseButton={false}><DialogTitle>{t("estimates.voidTitle")}</DialogTitle><DialogDescription>{t("estimates.voidText")}</DialogDescription><DialogFooter><Button variant="outline" disabled={pending} onClick={() => setVoidOpen(false)}>{t("common.cancel")}</Button><Button variant="destructive" disabled={pending} onClick={() => command("voided")}>{t("estimates.confirmVoid")}</Button></DialogFooter></DialogContent></Dialog>
   </section>;
 }

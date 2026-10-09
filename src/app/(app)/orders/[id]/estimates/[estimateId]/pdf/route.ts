@@ -16,7 +16,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
   try {
     const [{ data: order }, { data: estimate }] = await Promise.all([
       client.from("repair_orders").select("id").eq("id", id).is("deleted_at", null).maybeSingle(),
-      client.from("estimates").select("pdf_document_id,pdf_sha256,seq").eq("id", estimateId).eq("repair_order_id", id).is("deleted_at", null).in("kind", ["teardown", "repair"]).maybeSingle(),
+      client.from("estimates").select("pdf_document_id,pdf_sha256,seq").eq("id", estimateId).eq("repair_order_id", id).is("deleted_at", null).in("kind", ["teardown", "repair", "supplement"]).maybeSingle(),
     ]);
     if (!order || !estimate) throw new Error("notFound");
     if (estimate.pdf_document_id) {

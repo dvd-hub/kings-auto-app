@@ -1,4 +1,5 @@
 import "server-only";
+import { loadSupplementContext } from "@/lib/supplements";
 import type { createClient } from "@/lib/supabase/server";
 import type { EstimatePdfData } from "./estimate-pdf";
 import { sha256, storeGeneratedDocument } from "@/lib/documents";
@@ -8,7 +9,7 @@ type Client = Awaited<ReturnType<typeof createClient>>;
 export async function loadEstimatePdfData(client: Client, orderId: string, estimateId: string): Promise<EstimatePdfData> {
   const [{ data: order, error: orderError }, { data: estimate, error: estimateError }] = await Promise.all([
     client.from("repair_orders").select("*,customers(*),vehicles(*)").eq("id", orderId).is("deleted_at", null).maybeSingle(),
-    client.from("estimates").select("*").eq("id", estimateId).eq("repair_order_id", orderId).is("deleted_at", null).in("kind", ["teardown", "repair"]).maybeSingle(),
+    client.from("estimates").select("*").eq("id", estimateId).eq("repair_order_id", orderId).is("deleted_at", null).in("kind", ["teardown", "repair", "supplement"]).maybeSingle(),
   ]);
   if (orderError || estimateError || !order?.customers || !order.vehicles || !estimate) throw new Error("notFound");
   const [shop, lines, totals, auth] = await Promise.all([
@@ -27,7 +28,8 @@ export async function loadEstimatePdfData(client: Client, orderId: string, estim
     signature = Buffer.from(await blob.arrayBuffer());
     if (sha256(signature) !== doc.sha256) throw new Error("documentRead");
   }
-  return { shop: shop.data, order, estimate, customer: order.customers, vehicle: order.vehicles, lines: lines.data ?? [], totals: totals.data, authorization: auth.data, signature };
+  const supplement = await loadSupplementContext(client, estimate);
+  return { supplement, shop: shop.data, order, estimate, customer: order.customers, vehicle: order.vehicles, lines: lines.data ?? [], totals: totals.data, authorization: auth.data, signature };
 }
 
 export async function freezePdf(client: Client, orderId: string, estimateId: string) {

@@ -32,14 +32,15 @@ export async function signedDocument(client: Client, id: string, orderId: string
   return (await signedDocuments(client, [data]))[0];
 }
 
-export async function storeGeneratedDocument(client: Client, input: { shopId: string; orderId: string; estimateId: string; kind: "signature" | "estimate_pdf"; bytes: Buffer; caption: string }) {
+export async function storeGeneratedDocument(client: Client, input: { shopId: string; orderId: string; estimateId?: string; kind: "signature" | "estimate_pdf"; bytes: Buffer; caption: string }) {
+  if (input.kind === "estimate_pdf" && !input.estimateId) throw new Error("notFound");
   const mime = input.kind === "signature" ? "image/png" : "application/pdf";
   if (!input.bytes.length || input.bytes.length > MAX_DOCUMENT_BYTES || !DOCUMENT_MIMES.includes(mime)) throw new Error("documentSize");
   const storage_path = `${input.shopId}/ro/${input.orderId}/${input.kind === "signature" ? "auth" : `estimates/${input.estimateId}`}/${randomUUID()}.${documentExtensions[mime]}`;
   const { error: uploadError } = await client.storage.from("documents").upload(storage_path, input.bytes, { contentType: mime, upsert: false });
   if (uploadError) throw new Error("documentUpload");
   const hash = sha256(input.bytes);
-  const { data, error } = await client.from("documents").insert({ storage_path, kind: input.kind, repair_order_id: input.orderId, estimate_id: input.estimateId, mime_type: mime, size_bytes: input.bytes.length, sha256: hash, caption: input.caption }).select("id,sha256").single();
+  const { data, error } = await client.from("documents").insert({ storage_path, kind: input.kind, repair_order_id: input.orderId, ...(input.estimateId ? { estimate_id: input.estimateId } : {}), mime_type: mime, size_bytes: input.bytes.length, sha256: hash, caption: input.caption }).select("id,sha256").single();
   if (error || !data) throw new Error(error ? orderError(error) : "documentOrphan");
   return data;
 }

@@ -18,6 +18,7 @@ import { APPOINTMENT_DURATIONS, type FieldErrors } from "@/lib/validation";
 type AppointmentType = Database["public"]["Enums"]["appointment_type"];
 export type AppointmentDraft = {
   date: string; time: string; customer: { id: string; name: string } | null;
+  repairOrderId?: string; vehicleId?: string;
   /** Present when editing an existing appointment. */
   existing?: { id: string; type: AppointmentType; duration: number; vehicleId: string | null; title: string | null; notes: string | null };
 };
@@ -45,7 +46,7 @@ function FormBody({ draft, onClose, onCreated }: { draft: AppointmentDraft; onCl
   const [duration, setDuration] = useState(String(draft.existing?.duration ?? APPOINTMENT_DURATIONS.estimate));
   const [customer, setCustomer] = useState(draft.customer);
   const [vehicles, setVehicles] = useState<{ id: string; label: string }[]>([]);
-  const [vehicleId, setVehicleId] = useState(draft.existing?.vehicleId ?? "");
+  const [vehicleId, setVehicleId] = useState(draft.existing?.vehicleId ?? draft.vehicleId ?? "");
   const [title, setTitle] = useState(draft.existing?.title ?? "");
   const [notes, setNotes] = useState(draft.existing?.notes ?? "");
   const [errors, setErrors] = useState<FieldErrors>({});
@@ -70,14 +71,14 @@ function FormBody({ draft, onClose, onCreated }: { draft: AppointmentDraft; onCl
   function submit(event: React.FormEvent) {
     event.preventDefault();
     start(async () => {
-      const values = { type, date, time, duration, customer_id: customer?.id ?? null, vehicle_id: customer && vehicleId ? vehicleId : null, title, notes };
+      const values = { repair_order_id: draft.repairOrderId, type, date, time, duration, customer_id: customer?.id ?? null, vehicle_id: customer && vehicleId ? vehicleId : null, title, notes };
       const result = existing ? await updateAppointment(existing.id, values) : await createAppointment(values);
       if (!result.ok) {
         setErrors(result.fieldErrors ?? {});
-        if (result.error) toast.error(e(result.error === "notEditable" || result.error === "notFound" ? result.error : "save"));
+        if (result.error) toast.error(e(result.error));
         return;
       }
-      toast.success(existing ? t("updated") : t("created"));
+      if (result.warning) toast.warning(e(result.warning)); else toast.success(existing ? t("updated") : t("created"));
       onCreated();
     });
   }
@@ -105,7 +106,7 @@ function FormBody({ draft, onClose, onCreated }: { draft: AppointmentDraft; onCl
         {customer
           ? <div className="flex min-h-11 items-center justify-between gap-2 rounded-control border border-input bg-input-bg pl-3">
             <span id="customer_id" className="font-semibold">{customer.name}</span>
-            <Button type="button" variant="ghost" className="min-w-11 px-2" aria-label={t("clearCustomer")}
+            <Button type="button" variant="ghost" disabled={Boolean(draft.repairOrderId)} className="min-w-11 px-2" aria-label={t("clearCustomer")}
               onClick={() => { setCustomer(null); setVehicleId(""); setVehicles([]); }}><X className="size-5" /></Button>
           </div>
           : <CustomerSearch label={t("customer")} placeholder={t("searchCustomer")} onSelect={(option) => { setVehicleId(""); setCustomer({ id: option.id, name: customerName(option) }); }} />}

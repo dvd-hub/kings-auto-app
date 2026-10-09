@@ -26,6 +26,12 @@ export async function saveOrder(orderId: string | null, input: unknown): Promise
   const { data: existing, error: existingError } = orderId ? await supabase.from("repair_orders").select("*").eq("id", orderId).is("deleted_at", null).maybeSingle() : { data: null, error: null };
   if (orderId && (existingError || !existing)) return { ok: false, error: "notFound" };
   if (existing && (values.customer_id !== existing.customer_id || values.vehicle_id !== existing.vehicle_id)) {
+    if (existing.designee_signed_at) return { ok: false, error: "orderPartiesLocked" };
+    if (values.customer_id !== existing.customer_id) {
+      const { count, error } = await supabase.from("appointments").select("id", { count: "exact", head: true }).eq("repair_order_id", existing.id).is("deleted_at", null);
+      if (error) return { ok: false, error: orderError(error) };
+      if (count) return { ok: false, error: "orderPartiesLocked" };
+    }
     const { count, error } = await supabase.from("estimates").select("id", { count: "exact", head: true }).eq("repair_order_id", existing.id).is("deleted_at", null).not("status", "in", "(draft,voided)");
     if (error) return { ok: false, error: orderError(error) };
     if (count) return { ok: false, error: "orderPartiesLocked" };
@@ -67,6 +73,7 @@ export async function changeOrderStatus(input: unknown): Promise<OrderResult> {
   if (!(await supabase.auth.getUser()).data.user) return { ok: false, error: "notFound" };
   const { data: order } = await supabase.from("repair_orders").select("*").eq("id", parsed.data.id).is("deleted_at", null).maybeSingle();
   if (!order) return { ok: false, error: "notFound" };
+  if (order.status === "total_loss") return { ok: false, error: "orderClosed" };
   if (order.status === parsed.data.status) return { ok: true, id: order.id };
   const now = new Date().toISOString();
   const status = parsed.data.status;
