@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
+import { FunctionsHttpError } from "@supabase/supabase-js";
 import { headers } from "next/headers";
 import { isIP } from "node:net";
 import { storeGeneratedDocument } from "@/lib/documents";
@@ -11,7 +12,7 @@ import { freezePdf } from "@/lib/pdf/estimate-data";
 import { createClient } from "@/lib/supabase/server";
 import type { Database } from "@/lib/database.types";
 import { estimateEditable, orderError, orderEvent, type OrderResult } from "@/lib/orders";
-import { fieldErrors, estimateCreateSchema, estimateDetailsSchema, estimateSendSchema, estimateLineSchema, estimateCommandSchema, lineCommandSchema, authorizationSchema, freezePdfSchema } from "@/lib/validation";
+import { fieldErrors, estimateCreateSchema, estimateDetailsSchema, estimateSendSchema, estimateLineSchema, estimateCommandSchema, lineCommandSchema, authorizationSchema, freezePdfSchema, estimateEmailSchema, estimateLinkRevokeSchema } from "@/lib/validation";
 
 async function context(orderId: string, estimateId: string) {
   if (!z.uuid().safeParse(orderId).success || !z.uuid().safeParse(estimateId).success) return null;
@@ -151,6 +152,50 @@ export async function changeEstimateStatus(input: unknown, details?: unknown): P
   const { error: activityError } = await ctx.supabase.from("activities").insert({ repair_order_id: orderId, customer_id: ctx.order.customer_id, kind: "system", body: orderEvent(command === "sent" ? "sentActivity" : command === "draft" ? "draftActivity" : "voidActivity", { kind: ctx.estimate.kind, seq: ctx.estimate.seq }) });
   refresh(orderId, estimateId, ctx.order.customer_id);
   return { ok: true, id: estimateId, ...(activityError ? { warning: "historySave" } : {}) };
+}
+
+export async function sendEstimateByEmail(input: unknown, details?: unknown): Promise<OrderResult> {
+  const parsed = estimateEmailSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, fieldErrors: fieldErrors(parsed.error) };
+  const { orderId, estimateId, email } = parsed.data;
+  const ctx = await context(orderId, estimateId);
+  if (!ctx) return { ok: false, error: "notFound" };
+  if (!estimateEditable(ctx.estimate)) return { ok: false, error: "estimateLocked" };
+  if (ctx.estimate.status === "draft") {
+    const sent = await changeEstimateStatus({ orderId, estimateId, command: "sent" }, details);
+    if (!sent.ok) return sent;
+  }
+  // Invoke with the normal server client: the Edge Function checks the user's JWT and RLS.
+  try {
+    const { data, error } = await ctx.supabase.functions.invoke("send-estimate-link", { body: { estimateId, email } });
+    let response: unknown = data;
+    if (error instanceof FunctionsHttpError) {
+      try { response = await error.context.json(); } catch { response = null; }
+    }
+    const body = z.object({ ok: z.boolean().optional(), linkId: z.uuid().optional(), error: z.string().optional() }).safeParse(response);
+    refresh(orderId, estimateId, ctx.order.customer_id);
+    if (error || !body.success || !body.data.ok || !body.data.linkId) {
+      const errors: Record<string, string> = { estimateNotSent: "estimateNotSent", emailFailed: "estimateEmailFailed", linkFailed: "estimateLinkFailed", notConfigured: "estimateEmailNotConfigured", notFound: "notFound", auth: "estimateEmailAuth", invalid: "estimateEmailInvalid" };
+      return { ok: false, error: errors[body.success ? body.data.error ?? "" : ""] ?? "estimateEmailFailed" };
+    }
+    return { ok: true, id: body.data.linkId };
+  } catch {
+    refresh(orderId, estimateId, ctx.order.customer_id);
+    return { ok: false, error: "estimateEmailFailed" };
+  }
+}
+
+export async function revokeEstimateLink(input: unknown): Promise<OrderResult> {
+  const parsed = estimateLinkRevokeSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, error: "notFound" };
+  const { orderId, estimateId, linkId } = parsed.data;
+  const ctx = await context(orderId, estimateId);
+  if (!ctx) return { ok: false, error: "notFound" };
+  const { data, error } = await ctx.supabase.from("estimate_links").update({ revoked_at: new Date().toISOString() })
+    .eq("id", linkId).eq("estimate_id", estimateId).is("deleted_at", null).is("used_at", null).is("revoked_at", null).select("id").maybeSingle();
+  refresh(orderId, estimateId, ctx.order.customer_id);
+  if (error || !data) return { ok: false, error: error ? "estimateLinkFailed" : "changedElsewhere" };
+  return { ok: true, id: data.id };
 }
 
 export async function authorizeEstimate(input: unknown): Promise<OrderResult> {

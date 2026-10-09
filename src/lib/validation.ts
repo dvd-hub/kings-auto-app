@@ -259,6 +259,22 @@ export const registerDocumentSchema = z.object({
 export const documentEditSchema = z.object({ orderId: z.uuid(), documentId: z.uuid(), caption: z.string().trim().max(1000).optional(), remove: z.boolean().default(false) });
 export const attachPayorSchema = z.object({ orderId: z.uuid(), estimateId: z.uuid(), documentId: z.uuid() });
 export const freezePdfSchema = z.object({ orderId: z.uuid(), estimateId: z.uuid() });
+export const estimateEmailSchema = z.object({
+  orderId: z.uuid(), estimateId: z.uuid(),
+  email: z.string().trim().max(254, "invalidEmail").pipe(z.email({ message: "invalidEmail" })),
+});
+export const estimateLinkRevokeSchema = z.object({ orderId: z.uuid(), estimateId: z.uuid(), linkId: z.uuid() });
+export const remoteAuthorizationSchema = z.object({
+  decision: z.enum(["approved", "declined"]),
+  authorizer_name: z.string().trim().min(1, "required").max(200, "tooLong"),
+  confirmed: z.boolean(),
+  return_parts_requested: z.boolean(),
+  signature: z.string().max(700000, "tooLong"),
+}).superRefine((v, ctx) => {
+  if (v.decision === "approved" && !v.confirmed) ctx.addIssue({ code: "custom", path: ["confirmed"], message: "required" });
+  if (v.decision === "approved" && !v.signature) ctx.addIssue({ code: "custom", path: ["signature"], message: "signatureRequired" });
+  if (v.decision === "declined" && v.return_parts_requested) ctx.addIssue({ code: "custom", path: ["return_parts_requested"], message: "required" });
+});
 export const authorizationSchema = z.object({
   orderId: z.uuid(), estimateId: z.uuid(),
   by_designee: z.boolean().default(false),

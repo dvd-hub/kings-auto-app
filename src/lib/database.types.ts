@@ -599,6 +599,92 @@ export type Database = {
           },
         ]
       }
+      estimate_links: {
+        Row: {
+          authorization_id: string | null
+          created_at: string
+          created_by: string | null
+          deleted_at: string | null
+          email_message_id: string | null
+          estimate_id: string
+          expires_at: string
+          id: string
+          opened_at: string | null
+          recipient_email: string
+          revoked_at: string | null
+          sent_at: string | null
+          shop_id: string
+          token_hash: string
+          updated_at: string
+          used_at: string | null
+        }
+        Insert: {
+          authorization_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          email_message_id?: string | null
+          estimate_id: string
+          expires_at: string
+          id?: string
+          opened_at?: string | null
+          recipient_email: string
+          revoked_at?: string | null
+          sent_at?: string | null
+          shop_id?: string
+          token_hash: string
+          updated_at?: string
+          used_at?: string | null
+        }
+        Update: {
+          authorization_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          email_message_id?: string | null
+          estimate_id?: string
+          expires_at?: string
+          id?: string
+          opened_at?: string | null
+          recipient_email?: string
+          revoked_at?: string | null
+          sent_at?: string | null
+          shop_id?: string
+          token_hash?: string
+          updated_at?: string
+          used_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "estimate_links_authorization_id_fkey"
+            columns: ["authorization_id"]
+            isOneToOne: false
+            referencedRelation: "authorizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "estimate_links_estimate_id_shop_id_fkey"
+            columns: ["estimate_id", "shop_id"]
+            isOneToOne: false
+            referencedRelation: "estimate_totals"
+            referencedColumns: ["estimate_id", "shop_id"]
+          },
+          {
+            foreignKeyName: "estimate_links_estimate_id_shop_id_fkey"
+            columns: ["estimate_id", "shop_id"]
+            isOneToOne: false
+            referencedRelation: "estimates"
+            referencedColumns: ["id", "shop_id"]
+          },
+          {
+            foreignKeyName: "estimate_links_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       estimates: {
         Row: {
           basis: Database["public"]["Enums"]["estimate_basis"]
@@ -1367,6 +1453,19 @@ export type Database = {
     }
     Functions: {
       current_shop_id: { Args: never; Returns: string }
+      freeze_estimate_pdf_via_link: {
+        Args: {
+          p_sha256: string
+          p_size: number
+          p_storage_path: string
+          p_token_hash: string
+        }
+        Returns: string
+      }
+      mark_estimate_link_opened: {
+        Args: { p_token_hash: string }
+        Returns: undefined
+      }
       next_number: { Args: { p_kind: string }; Returns: number }
       search_customers: {
         Args: { q: string }
@@ -1400,6 +1499,20 @@ export type Database = {
           isOneToOne: false
           isSetofReturn: true
         }
+      }
+      sign_estimate_via_link: {
+        Args: {
+          p_authorizer_name: string
+          p_decision: Database["public"]["Enums"]["authorization_decision"]
+          p_return_parts_requested: boolean
+          p_signature_path: string
+          p_signature_sha256: string
+          p_signature_size: number
+          p_signer_ip: unknown
+          p_signer_user_agent: string
+          p_token_hash: string
+        }
+        Returns: string
       }
       web_intake_attach_photos: {
         Args: { p_paths: string[]; p_request: string; p_shop: string }

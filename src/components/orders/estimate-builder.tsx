@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { ArrowUp, ArrowDown } from "lucide-react";
@@ -23,23 +24,44 @@ import { estimateEditable, estimateStatusVariants, type Estimate, type EstimateL
 import { formatMoney, formatDateTime, formatRoNumber, parseMoneyToCents } from "@/lib/format";
 import type { FieldErrors } from "@/lib/validation";
 import { saveEstimateDetails, changeEstimateStatus, changeEstimateLine } from "@/app/(app)/orders/estimate-actions";
+import { sendEstimateByEmail, revokeEstimateLink } from "@/app/(app)/orders/estimate-actions";
+import { estimateLinkStatus, type EstimateLink } from "@/lib/estimate-links";
 
 type Values = { basis: string; teardown_area: string; teardown_may_prevent_restoration: string; reassembly_max_days: string; pickup_deadline_days: string; payor_name: string; payor_claim_number: string; payor_estimate_total_cents: string; payor_approved_amount_cents: string };
 
-export function EstimateBuilder({ supplement, estimate, lines, totals, order, customer, epaAvailable, payorDocument, authorization, signature, proofs }: { supplement: SupplementContext | null; estimate: Estimate; lines: EstimateLine[]; totals: EstimateTotals | null; order: RepairOrder; customer: { id: string; name: string; phone: string | null; email: string | null }; epaAvailable: boolean; payorDocument: SignedDocument | null; authorization: Authorization | null; signature: SignedDocument | null; proofs: SignedDocument[] }) {
+export function EstimateBuilder({ latestLink, initialLinkStatus, supplement, estimate, lines, totals, order, customer, epaAvailable, payorDocument, authorization, signature, proofs }: { latestLink: EstimateLink | null; initialLinkStatus: ReturnType<typeof estimateLinkStatus> | null; supplement: SupplementContext | null; estimate: Estimate; lines: EstimateLine[]; totals: EstimateTotals | null; order: RepairOrder; customer: { id: string; name: string; phone: string | null; email: string | null }; epaAvailable: boolean; payorDocument: SignedDocument | null; authorization: Authorization | null; signature: SignedDocument | null; proofs: SignedDocument[] }) {
   const t = useTranslations();
+  const router = useRouter();
   const locale = useLocale();
   const editable = estimateEditable(estimate);
   const [values, setValues] = useState<Values>({ basis: estimate.basis, teardown_area: estimate.teardown_area ?? "", teardown_may_prevent_restoration: estimate.teardown_may_prevent_restoration === null ? "" : String(estimate.teardown_may_prevent_restoration), reassembly_max_days: estimate.reassembly_max_days?.toString() ?? "", pickup_deadline_days: estimate.pickup_deadline_days?.toString() ?? "", payor_name: estimate.payor_name ?? "", payor_claim_number: estimate.payor_claim_number ?? "", payor_estimate_total_cents: estimate.payor_estimate_total_cents === null ? "" : formatMoney(estimate.payor_estimate_total_cents), payor_approved_amount_cents: estimate.payor_approved_amount_cents === null ? "" : formatMoney(estimate.payor_approved_amount_cents) });
   const [errors, setErrors] = useState<FieldErrors>({});
   const [editor, setEditor] = useState<EstimateLine | "new" | null>(null);
   const [voidOpen, setVoidOpen] = useState(false);
+  const [emailOpen, setEmailOpen] = useState(false);
+  const [email, setEmail] = useState(customer.email ?? "");
   const [pending, start] = useTransition();
   const blockedThirdParty = values.basis === "third_party" && !estimate.payor_estimate_document_id;
   const missingRoles = estimate.kind === "teardown" && (!lines.some((l) => l.teardown_role === "teardown") || !lines.some((l) => l.teardown_role === "reassembly"));
   const legal = Boolean(values.payor_name.trim()) && parseMoneyToCents(values.payor_approved_amount_cents) === null;
   const set = (key: keyof Values) => (event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => setValues((v) => ({ ...v, [key]: event.target.value }));
-  const input = (key: keyof Values, label: string, hint?: string, money = false) => <Field id={key} label={label} error={errors[key]} hint={hint}><Input {...fieldAria(key, errors[key])} value={values[key]} disabled={!editable || pending} onChange={set(key)} inputMode={money ? "decimal" : key.endsWith("days") ? "numeric" : undefined} /></Field>;
+  const input = (key: keyof Values, label: string, hint?: string, money = false, prefix = "") => <Field id={`${prefix}${key}`} label={label} error={errors[key]} hint={hint}><Input {...fieldAria(`${prefix}${key}`, errors[key])} value={values[key]} disabled={!editable || pending} onChange={set(key)} inputMode={money ? "decimal" : key.endsWith("days") ? "numeric" : undefined} /></Field>;
+  const teardownFields = (prefix = "") => <>
+    {input("teardown_area", t("estimates.teardownArea"), t("estimates.teardownAreaHint"), false, prefix)}
+    <Field id={`${prefix}teardown_may_prevent_restoration`} label={t("estimates.preventRestoration")} error={errors.teardown_may_prevent_restoration}><Select {...fieldAria(`${prefix}teardown_may_prevent_restoration`, errors.teardown_may_prevent_restoration)} value={values.teardown_may_prevent_restoration} onChange={set("teardown_may_prevent_restoration")} disabled={!editable || pending}><option value="">{t("estimates.choose")}</option><option value="true">{t("estimates.yes")}</option><option value="false">{t("estimates.no")}</option></Select></Field>
+    <div className="grid gap-4 sm:grid-cols-2">{input("reassembly_max_days", t("estimates.reassemblyDays"), t("estimates.reassemblyHint"), false, prefix)}{input("pickup_deadline_days", `${t("estimates.pickupDays")} · ${t("common.optional")}`, t("estimates.pickupHint"), false, prefix)}</div>
+  </>;
+  const payorFields = (prefix = "") => <>
+    <Field id={`${prefix}basis`} label={t("estimates.basis")} error={errors.basis}><Select {...fieldAria(`${prefix}basis`, errors.basis)} value={values.basis} onChange={set("basis")} disabled={!editable || pending}><option value="shop">{t("estimate_basis.shop")}</option><option value="third_party">{t("estimate_basis.third_party")}</option></Select></Field>
+    <div className="grid gap-4 sm:grid-cols-2">{input("payor_name", t("estimates.payorName"), undefined, false, prefix)}{input("payor_claim_number", t("estimates.claimNumber"), undefined, false, prefix)}{input("payor_estimate_total_cents", t("estimates.payorTotal"), undefined, true, prefix)}{input("payor_approved_amount_cents", `${t("estimates.payorApproved")} · ${t("common.optional")}`, t("estimates.ifKnown"), true, prefix)}</div>
+  </>;
+  const linkStatus = initialLinkStatus;
+  function emailEstimate() {
+    start(async () => {
+      if (handle(await sendEstimateByEmail({ orderId: order.id, estimateId: estimate.id, email }, values), t("estimateEmail.sent"))) setEmailOpen(false);
+      router.refresh();
+    });
+  }
   function handle(result: OrderResult, message: string) {
     if (!result.ok) { setErrors(result.fieldErrors ?? {}); if (result.error) toast.error(t(`errors.${result.error}`)); return false; }
     setErrors({});
@@ -55,7 +77,7 @@ export function EstimateBuilder({ supplement, estimate, lines, totals, order, cu
   return <section className="min-w-0 space-y-6">
     <div className="flex flex-wrap items-start justify-between gap-3"><div><h1 className={estimate.status === "voided" ? "line-through" : ""}>{supplement ? t("phase3b2.supplementTitle", { seq: estimate.seq, kind: t(`estimate_kind.${supplement.parent.kind}`), parent: supplement.parent.seq }) : <>{t(`estimate_kind.${estimate.kind}`)} {estimate.seq}</>}</h1><div className="mt-2 flex flex-wrap items-center gap-3"><StatusBadge variant={estimateStatusVariants[estimate.status]} label={t(`estimate_status.${estimate.status}`)} /><Link href={`/orders/${order.id}`} className="inline-flex min-h-11 items-center font-mono text-link underline">{formatRoNumber(order.ro_number)}</Link><Link href={`/customers/${customer.id}`} className="inline-flex min-h-11 items-center text-link underline">{customer.name}</Link></div></div>
       {estimate.status === "authorized" && ["repair", "supplement"].includes(estimate.kind) && !["cancelled", "delivered", "total_loss"].includes(order.status) && <Button variant="outline" disabled={pending} onClick={() => start(async () => { const result = await createEstimate({ orderId: order.id, kind: "supplement", parentEstimateId: estimate.id }); if (!result.ok) handle(result, ""); })}>{t("phase3b2.newSupplement")}</Button>}
-      {editable && <div className="flex flex-wrap gap-2">{estimate.status === "draft" ? <Button disabled={pending || blockedThirdParty} onClick={() => command("sent")}>{t("estimates.markSent")}</Button> : <Button variant="outline" disabled={pending} onClick={() => command("draft")}>{t("estimates.backDraft")}</Button>}<Button variant="outline" disabled={pending} onClick={() => setVoidOpen(true)}>{t("estimates.void")}</Button></div>}
+      {editable && <div className="flex flex-wrap gap-2"><Button disabled={pending} onClick={() => { setEmail(customer.email ?? ""); setEmailOpen(true); }}>{t("estimateEmail.send")}</Button>{estimate.status === "draft" ? <Button variant="outline" disabled={pending || blockedThirdParty} onClick={() => command("sent")}>{t("estimates.markSent")}</Button> : <Button variant="outline" disabled={pending} onClick={() => command("draft")}>{t("estimates.backDraft")}</Button>}<Button variant="outline" disabled={pending} onClick={() => setVoidOpen(true)}>{t("estimates.void")}</Button></div>}
     </div>
     {supplement && <div className="grid gap-3 rounded-card border border-border bg-surface p-5 sm:grid-cols-3">{[["authorizedBefore", supplement.authorizedBefore], ["supplementAmount", totals?.total_cents ?? 0], ["revisedTotal", supplement.authorizedBefore + (totals?.total_cents ?? 0)]].map(([key, amount]) => <div key={key}><p>{t(`phase3b2.${key}`)}</p><p className="font-mono font-semibold">{formatMoney(Number(amount))}</p></div>)}</div>}
     {estimate.kind === "supplement" && estimate.status === "authorized" && estimate.payor_name && <div className="space-y-2 rounded-control bg-status-warning-bg p-4 text-status-warning-text">{estimate.payor_notified_at ? <p>{t("phase3b2.payorNotifiedAt", { when: formatDateTime(estimate.payor_notified_at) })}</p> : <><p>{t("phase3b2.notifyPayor")}</p><Button variant="outline" disabled={pending} onClick={() => start(async () => { handle(await notifyPayor({ orderId: order.id, estimateId: estimate.id }), t("phase3b2.saved")); })}>{t("phase3b2.payorNotified")}</Button></>}</div>}
@@ -64,13 +86,10 @@ export function EstimateBuilder({ supplement, estimate, lines, totals, order, cu
       <div className="min-w-0 space-y-6">
         <form noValidate className="space-y-6" onSubmit={(event) => { event.preventDefault(); start(async () => { handle(await saveEstimateDetails(order.id, estimate.id, values), t("estimates.saved")); }); }}>
           {estimate.kind === "teardown" && <div className="space-y-4 rounded-card border border-border bg-surface p-5 sm:p-6"><h2>{t("estimates.teardownDetails")}</h2>
-            {input("teardown_area", t("estimates.teardownArea"), t("estimates.teardownAreaHint"))}
-            <Field id="teardown_may_prevent_restoration" label={t("estimates.preventRestoration")} error={errors.teardown_may_prevent_restoration}><Select {...fieldAria("teardown_may_prevent_restoration", errors.teardown_may_prevent_restoration)} value={values.teardown_may_prevent_restoration} onChange={set("teardown_may_prevent_restoration")} disabled={!editable || pending}><option value="">{t("estimates.choose")}</option><option value="true">{t("estimates.yes")}</option><option value="false">{t("estimates.no")}</option></Select></Field>
-            <div className="grid gap-4 sm:grid-cols-2">{input("reassembly_max_days", t("estimates.reassemblyDays"), t("estimates.reassemblyHint"))}{input("pickup_deadline_days", `${t("estimates.pickupDays")} · ${t("common.optional")}`, t("estimates.pickupHint"))}</div>
+            {teardownFields()}
           </div>}
           <div className="space-y-4 rounded-card border border-border bg-surface p-5 sm:p-6"><h2>{t("estimates.payor")}</h2>
-            <Field id="basis" label={t("estimates.basis")} error={errors.basis}><Select {...fieldAria("basis", errors.basis)} value={values.basis} onChange={set("basis")} disabled={!editable || pending}><option value="shop">{t("estimate_basis.shop")}</option><option value="third_party">{t("estimate_basis.third_party")}</option></Select></Field>
-            <div className="grid gap-4 sm:grid-cols-2">{input("payor_name", t("estimates.payorName"))}{input("payor_claim_number", t("estimates.claimNumber"))}{input("payor_estimate_total_cents", t("estimates.payorTotal"), undefined, true)}{input("payor_approved_amount_cents", `${t("estimates.payorApproved")} · ${t("common.optional")}`, t("estimates.ifKnown"), true)}</div>
+            {payorFields()}
             {values.basis === "third_party" && <div className="space-y-2">{payorDocument?.url && <a className="inline-flex min-h-11 items-center break-all text-link underline" href={payorDocument.url} target="_blank" rel="noopener noreferrer">{t("documents.openFile")} · {payorDocument.caption}</a>}{editable && <DocumentUpload shopId={order.shop_id} orderId={order.id} estimateId={estimate.id} kind="third_party_estimate" label={t(payorDocument ? "documents.changeInsurer" : "documents.attachInsurer")} disabled={pending} onUploaded={async (documentId) => { const saved = await saveEstimateDetails(order.id, estimate.id, values); if (!saved.ok) { setErrors(saved.fieldErrors ?? {}); return saved; } return attachPayorDocument({ orderId: order.id, estimateId: estimate.id, documentId }); }} />}{blockedThirdParty && <p role="status" className="text-status-warning-text">{t("errors.payorDocumentRequired")}</p>}</div>}
             {editable && <Button type="submit" variant="outline" disabled={pending}>{pending ? t("common.saving") : t("estimates.saveDetails")}</Button>}
           </div>
@@ -94,5 +113,17 @@ export function EstimateBuilder({ supplement, estimate, lines, totals, order, cu
     </div>
     {editor && editable && <LineEditor key={editor === "new" ? "new" : editor.id} orderId={order.id} estimateId={estimate.id} kind={estimate.kind} line={editor === "new" ? null : editor} epaAvailable={epaAvailable} onClose={() => setEditor(null)} />}
     <Dialog open={voidOpen} onOpenChange={setVoidOpen}><DialogContent showCloseButton={false}><DialogTitle>{t("estimates.voidTitle")}</DialogTitle><DialogDescription>{t("estimates.voidText")}</DialogDescription><DialogFooter><Button variant="outline" disabled={pending} onClick={() => setVoidOpen(false)}>{t("common.cancel")}</Button><Button variant="destructive" disabled={pending} onClick={() => command("voided")}>{t("estimates.confirmVoid")}</Button></DialogFooter></DialogContent></Dialog>
+    {latestLink && linkStatus && <section className="space-y-3 rounded-card border border-border bg-surface p-5 sm:p-6"><div className="flex flex-wrap items-center justify-between gap-3"><h2>{t("estimateEmail.linkTitle")}</h2><StatusBadge variant={linkStatus === "signed" ? "success" : linkStatus === "expired" || linkStatus === "revoked" ? "neutral" : "info"} label={t(`estimateEmail.status.${linkStatus}`)} /></div>
+      <p className="break-words">{latestLink.sent_at ? t("estimateEmail.sentTo", { email: latestLink.recipient_email, when: formatDateTime(latestLink.sent_at) }) : t("estimateEmail.pendingTo", { email: latestLink.recipient_email })}</p>
+      {latestLink.opened_at && <p>{t("estimateEmail.openedAt", { when: formatDateTime(latestLink.opened_at) })}</p>}{latestLink.used_at && <p>{t("estimateEmail.signedAt", { when: formatDateTime(latestLink.used_at) })}</p>}
+      <p>{t("estimateEmail.expiresAt", { when: formatDateTime(latestLink.expires_at) })}</p>
+      {editable && <div className="flex flex-wrap gap-2"><Button variant="outline" disabled={pending} onClick={() => { setEmail(latestLink.recipient_email); setEmailOpen(true); }}>{t("estimateEmail.resend")}</Button>{!latestLink.revoked_at && !latestLink.used_at && <Button variant="outline" disabled={pending} onClick={() => start(async () => { handle(await revokeEstimateLink({ orderId: order.id, estimateId: estimate.id, linkId: latestLink.id }), t("estimateEmail.cancelled")); router.refresh(); })}>{t("estimateEmail.cancelLink")}</Button>}</div>}
+    </section>}
+    <Dialog open={emailOpen} onOpenChange={open => { if (!pending) setEmailOpen(open); }}><DialogContent showCloseButton={false} className="max-h-[90dvh] overflow-y-auto sm:max-w-xl"><DialogTitle>{t("estimateEmail.send")}</DialogTitle><DialogDescription>{t("estimateEmail.description")}</DialogDescription>
+      <form noValidate className="space-y-5" onSubmit={event => { event.preventDefault(); emailEstimate(); }}><Field id="estimate-email" label={t("authorization.email")} error={errors.email}><Input {...fieldAria("estimate-email", errors.email)} type="email" autoComplete="email" required value={email} disabled={pending} onChange={event => setEmail(event.target.value)} /></Field>
+        {estimate.status === "draft" && <>{estimate.kind === "teardown" && <div className="space-y-4"><h3>{t("estimates.teardownDetails")}</h3>{teardownFields("email-")}</div>}<div className="space-y-4"><h3>{t("estimates.payor")}</h3>{payorFields("email-")}</div>{blockedThirdParty && <p role="status" className="text-status-warning-text">{t("errors.payorDocumentRequired")}</p>}</>}
+        <DialogFooter><Button type="button" variant="outline" disabled={pending} onClick={() => setEmailOpen(false)}>{t("common.cancel")}</Button><Button type="submit" disabled={pending}>{pending ? t("common.saving") : t("estimateEmail.send")}</Button></DialogFooter>
+      </form>
+    </DialogContent></Dialog>
   </section>;
 }
