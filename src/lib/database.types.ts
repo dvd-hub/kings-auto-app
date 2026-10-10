@@ -865,6 +865,47 @@ export type Database = {
           },
         ]
       }
+      production_stages: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          deleted_at: string | null
+          id: string
+          name: string
+          position: number
+          shop_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          id?: string
+          name: string
+          position: number
+          shop_id?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          id?: string
+          name?: string
+          position?: number
+          shop_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "production_stages_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string
@@ -927,6 +968,8 @@ export type Database = {
           notes: string | null
           odometer_in: number
           odometer_out: number | null
+          production_stage_at: string | null
+          production_stage_id: string | null
           promised_at: string | null
           ready_for_pickup_notified_at: string | null
           received_at: string
@@ -960,6 +1003,8 @@ export type Database = {
           notes?: string | null
           odometer_in: number
           odometer_out?: number | null
+          production_stage_at?: string | null
+          production_stage_id?: string | null
           promised_at?: string | null
           ready_for_pickup_notified_at?: string | null
           received_at?: string
@@ -993,6 +1038,8 @@ export type Database = {
           notes?: string | null
           odometer_in?: number
           odometer_out?: number | null
+          production_stage_at?: string | null
+          production_stage_id?: string | null
           promised_at?: string | null
           ready_for_pickup_notified_at?: string | null
           received_at?: string
@@ -1022,6 +1069,13 @@ export type Database = {
             columns: ["designee_signature_document_id", "shop_id"]
             isOneToOne: false
             referencedRelation: "documents"
+            referencedColumns: ["id", "shop_id"]
+          },
+          {
+            foreignKeyName: "repair_orders_production_stage_fkey"
+            columns: ["production_stage_id", "shop_id"]
+            isOneToOne: false
+            referencedRelation: "production_stages"
             referencedColumns: ["id", "shop_id"]
           },
           {
@@ -1097,6 +1151,65 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "shops"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      ro_stage_events: {
+        Row: {
+          changed_at: string
+          changed_by: string | null
+          from_stage_id: string | null
+          id: string
+          repair_order_id: string
+          shop_id: string
+          to_stage_id: string
+        }
+        Insert: {
+          changed_at?: string
+          changed_by?: string | null
+          from_stage_id?: string | null
+          id?: string
+          repair_order_id: string
+          shop_id: string
+          to_stage_id: string
+        }
+        Update: {
+          changed_at?: string
+          changed_by?: string | null
+          from_stage_id?: string | null
+          id?: string
+          repair_order_id?: string
+          shop_id?: string
+          to_stage_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ro_stage_events_from_stage_id_shop_id_fkey"
+            columns: ["from_stage_id", "shop_id"]
+            isOneToOne: false
+            referencedRelation: "production_stages"
+            referencedColumns: ["id", "shop_id"]
+          },
+          {
+            foreignKeyName: "ro_stage_events_repair_order_id_shop_id_fkey"
+            columns: ["repair_order_id", "shop_id"]
+            isOneToOne: false
+            referencedRelation: "repair_orders"
+            referencedColumns: ["id", "shop_id"]
+          },
+          {
+            foreignKeyName: "ro_stage_events_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ro_stage_events_to_stage_id_shop_id_fkey"
+            columns: ["to_stage_id", "shop_id"]
+            isOneToOne: false
+            referencedRelation: "production_stages"
+            referencedColumns: ["id", "shop_id"]
           },
         ]
       }

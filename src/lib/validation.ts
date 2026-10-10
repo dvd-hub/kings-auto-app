@@ -242,6 +242,7 @@ export const estimateLineSchema = z.object({
 
 export const orderActivitySchema = z.object({ repair_order_id: z.uuid(), kind: z.enum(["note", "call"], { message: "required" }), body: z.string().trim().min(1, "required").max(5000, "tooLong") });
 export const orderStatusSchema = z.object({ id: z.uuid(), status: z.enum(["open", "in_progress", "completed", "delivered", "cancelled"]) });
+export const productionStageSchema = z.object({ id: z.uuid(), production_stage_id: z.uuid() });
 export const estimateCommandSchema = z.object({ orderId: z.uuid(), estimateId: z.uuid(), command: z.enum(["sent", "draft", "voided"]) });
 export const estimateCreateSchema = z.object({ orderId: z.uuid(), kind: z.enum(["teardown", "repair", "supplement"]), parentEstimateId: z.uuid().optional() }).superRefine((v, ctx) => {
   if ((v.kind === "supplement") !== Boolean(v.parentEstimateId)) ctx.addIssue({ code: "custom", path: ["parentEstimateId"], message: "supplementParentInvalid" });

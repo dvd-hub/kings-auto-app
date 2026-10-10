@@ -47,7 +47,7 @@ export function orderActivityText(body: string | null, t: Awaited<ReturnType<typ
   if (!body) return "";
   try {
     const event = JSON.parse(body);
-    const key = (["createdActivity", "statusActivity", "sentActivity", "estimateEmailedActivity", "voidActivity", "draftActivity", "authorizationActivity", "supplementCreatedActivity", "payorNotifiedActivity", "designeeActivity", "teardownActivity", "pickupNotifiedActivity", "appointmentLinkedActivity", "appointmentUnlinkedActivity", "appointmentCreatedActivity"] as const).find((key) => key === event?.key);
+    const key = (["createdActivity", "stageActivity", "statusActivity", "sentActivity", "estimateEmailedActivity", "voidActivity", "draftActivity", "authorizationActivity", "supplementCreatedActivity", "payorNotifiedActivity", "designeeActivity", "teardownActivity", "pickupNotifiedActivity", "appointmentLinkedActivity", "appointmentUnlinkedActivity", "appointmentCreatedActivity"] as const).find((key) => key === event?.key);
     if (event?.module === "orders" && key && event.values && Object.values(event.values).every((v) => typeof v === "string" || typeof v === "number")) {
       const values = { ...event.values };
       const status = Constants.public.Enums.ro_status.find((s) => s === values.status);

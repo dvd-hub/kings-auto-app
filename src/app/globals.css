@@ -134,3 +134,29 @@
   h1 { font-size: 34px; }
   h2 { font-size: 22px; }
 }
+
+.production-scrollbar {
+  min-height: 44px;
+  scrollbar-width: auto;
+  scrollbar-color: var(--text-secondary) var(--border-default);
+}
+
+/* Keep the explicit 16px track in browsers that support WebKit scrollbar styles. */
+@supports selector(::-webkit-scrollbar) {
+  .production-scrollbar { scrollbar-color: auto; }
+}
+
+.production-scrollbar::-webkit-scrollbar { height: 16px; }
+.production-scrollbar::-webkit-scrollbar-track {
+  background: var(--border-default);
+  border-radius: var(--badge-radius);
+}
+.production-scrollbar::-webkit-scrollbar-thumb {
+  min-width: 44px;
+  background: var(--text-secondary);
+  border: 3px solid var(--border-default);
+  border-radius: var(--badge-radius);
+}
+
+.production-board-viewport { scrollbar-width: none; }
+.production-board-viewport::-webkit-scrollbar { display: none; }

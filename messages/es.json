@@ -72,6 +72,9 @@
     "emptyDescription": "Esta sección está preparada para futuras funciones del taller."
   },
   "errors": {
+    "productionStageRequired": "Selecciona una orden y una etapa de producción válidas. La etapa no se puede quitar.",
+    "productionStageOrderInactive": "Solo se puede cambiar la etapa de órdenes abiertas o en curso.",
+    "productionStageUnavailable": "Esta etapa de producción no está disponible. Actualiza el tablero e inténtalo de nuevo.",
     "save": "No se pudieron guardar los cambios. Inténtalo de nuevo.",
     "notFound": "Este registro ya no existe o fue archivado.",
     "load": "No se pudieron cargar los datos. Recarga la página.",
@@ -289,6 +292,26 @@
     "saved": "Vehículo guardado.",
     "untitled": "Vehículo"
   },
+  "production": {
+    "title": "Tablero de producción",
+    "noVehicles": "Sin vehículos",
+    "noStages": "No hay etapas de producción disponibles.",
+    "vehicleCount": "{count, plural, one {# vehículo} other {# vehículos}}",
+    "daysInStage": "{count, plural, one {# día en esta etapa} other {# días en esta etapa}}",
+    "stageTimeUnknown": "Fecha de inicio de etapa no disponible",
+    "promised": "Fecha prometida: {date}",
+    "late": "Atrasado",
+    "movePrevious": "Mover {ro} a la etapa anterior: {stage}",
+    "moveNext": "Mover {ro} a la etapa siguiente: {stage}",
+    "noPrevious": "{ro} está en la primera etapa",
+    "noNext": "{ro} está en la última etapa",
+    "scrollLeft": "Desplazar el tablero de producción una etapa a la izquierda",
+    "scrollRight": "Desplazar el tablero de producción una etapa a la derecha",
+    "scrollbar": "Desplazar columnas de producción",
+    "previousSymbol": "◀\uFE0E",
+    "nextSymbol": "▶\uFE0E",
+    "moved": "{ro} movida a {stage}."
+  },
   "calendar": {
     "title": "Calendario",
     "today": "Hoy",
@@ -444,6 +467,7 @@
     "newTeardown": "Nuevo presupuesto de desmontaje",
     "newRepair": "Nuevo presupuesto de reparación",
     "createdActivity": "Orden de reparación {ro} creada",
+    "stageActivity": "Etapa: {from} → {to}",
     "statusActivity": "Orden de reparación {ro} cambió a {status}",
     "sentActivity": "{kind} {seq} enviado",
     "voidActivity": "{kind} {seq} anulado",

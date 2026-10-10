@@ -72,6 +72,9 @@
     "emptyDescription": "This section is ready for future workshop workflows."
   },
   "errors": {
+    "productionStageRequired": "Choose a valid order and production stage. The stage cannot be cleared.",
+    "productionStageOrderInactive": "Stages can only change on open or in-progress orders.",
+    "productionStageUnavailable": "This production stage is unavailable. Refresh the board and try again.",
     "save": "We couldn’t save the changes. Please try again.",
     "notFound": "This record no longer exists or was archived.",
     "load": "We couldn’t load the data. Please refresh the page.",
@@ -289,6 +292,26 @@
     "saved": "Vehicle saved.",
     "untitled": "Vehicle"
   },
+  "production": {
+    "title": "Production board",
+    "noVehicles": "No vehicles",
+    "noStages": "No production stages available.",
+    "vehicleCount": "{count, plural, one {# vehicle} other {# vehicles}}",
+    "daysInStage": "{count, plural, one {# day in this stage} other {# days in this stage}}",
+    "stageTimeUnknown": "Stage start date unavailable",
+    "promised": "Promised: {date}",
+    "late": "Late",
+    "movePrevious": "Move {ro} to the previous stage: {stage}",
+    "moveNext": "Move {ro} to the next stage: {stage}",
+    "noPrevious": "{ro} is in the first stage",
+    "noNext": "{ro} is in the last stage",
+    "scrollLeft": "Scroll production board one stage to the left",
+    "scrollRight": "Scroll production board one stage to the right",
+    "scrollbar": "Scroll production columns",
+    "previousSymbol": "◀\uFE0E",
+    "nextSymbol": "▶\uFE0E",
+    "moved": "{ro} moved to {stage}."
+  },
   "calendar": {
     "title": "Calendar",
     "today": "Today",
@@ -444,6 +467,7 @@
     "newTeardown": "New teardown estimate",
     "newRepair": "New repair estimate",
     "createdActivity": "Repair order {ro} created",
+    "stageActivity": "Stage: {from} → {to}",
     "statusActivity": "Repair order {ro} changed to {status}",
     "sentActivity": "{kind} {seq} sent",
     "voidActivity": "{kind} {seq} voided",
