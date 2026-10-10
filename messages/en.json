@@ -737,6 +737,7 @@
     "alreadySigned": "Already signed",
     "alreadyDeclined": "Estimate declined",
     "thanks": "Thank you. Your authorization has been recorded and the estimate is locked.",
+    "receiptSent": "We sent a copy to your email.",
     "thanksDeclined": "Thank you. Your decision to decline has been recorded. Please contact the workshop with any questions.",
     "download": "Download your signed copy",
     "downloadExpiry": "This download is valid for 10 minutes. Refresh this page for a new download.",

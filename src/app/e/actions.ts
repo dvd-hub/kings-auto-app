@@ -63,6 +63,9 @@ export async function signPublicEstimate(token: string, fingerprint: string, inp
     const { error: uploadError } = await ctx.admin.storage.from("documents").upload(pdfPath, pdf, { contentType: "application/pdf", upsert: false });
     if (!uploadError) await ctx.admin.rpc("freeze_estimate_pdf_via_link", { p_token_hash: ctx.tokenHash, p_storage_path: pdfPath, p_sha256: sha256(pdf), p_size: pdf.length });
   } catch { /* Keep the saved authorization. Never replace a frozen PDF. */ }
+  try {
+    await ctx.admin.functions.invoke("send-estimate-receipt", { body: { token }, timeout: 20_000 });
+  } catch { /* Receipt failures must not change the saved authorization or expose the token. */ }
   revalidatePath(`/orders/${ctx.estimate.repair_order_id}`);
   revalidatePath(`/orders/${ctx.estimate.repair_order_id}/estimates/${ctx.estimate.id}`);
   return { ok: true };

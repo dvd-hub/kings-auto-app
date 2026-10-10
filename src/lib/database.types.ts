@@ -610,6 +610,7 @@ export type Database = {
           expires_at: string
           id: string
           opened_at: string | null
+          receipt_sent_at: string | null
           recipient_email: string
           revoked_at: string | null
           sent_at: string | null
@@ -628,6 +629,7 @@ export type Database = {
           expires_at: string
           id?: string
           opened_at?: string | null
+          receipt_sent_at?: string | null
           recipient_email: string
           revoked_at?: string | null
           sent_at?: string | null
@@ -646,6 +648,7 @@ export type Database = {
           expires_at?: string
           id?: string
           opened_at?: string | null
+          receipt_sent_at?: string | null
           recipient_email?: string
           revoked_at?: string | null
           sent_at?: string | null
@@ -1465,6 +1468,10 @@ export type Database = {
       mark_estimate_link_opened: {
         Args: { p_token_hash: string }
         Returns: undefined
+      }
+      mark_estimate_receipt_sent: {
+        Args: { p_token_hash: string }
+        Returns: boolean
       }
       next_number: { Args: { p_kind: string }; Returns: number }
       search_customers: {

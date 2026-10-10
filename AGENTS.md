@@ -89,6 +89,9 @@ Mockups aprobados: dashboard, orden de reparación, tablero de producción y con
 - Archivos en Supabase Storage: bucket privado `documents`, ruta `<shop_id>/...`, solo subir y leer (nunca sobrescribir ni borrar). Cada archivo tiene su fila en `documents`.
 - Citas pedidas desde la web: estado `requested` y `source = 'web'`. El taller las confirma (pasan a `scheduled`); el servidor solo confirma si la cita sigue en `requested`.
 - Solicitudes web (`web_requests`): solo lectura en la app (como mucho se cambia `status` o `deleted_at`). Se muestran en el detalle de la cita del calendario con `src/lib/web-requests.ts`; las fotos se leen con URLs firmadas (`createSignedUrls`, 1 h) y `<img>` normal, nunca `next/image`.
+- Firma remota (fase 3b3): página pública `/e/[token]` fuera de `(app)`. Es el ÚNICO sitio que usa `src/lib/supabase/admin.ts` (clave `SUPABASE_SECRET_KEY`, solo servidor). Nunca muestres ni registres el token; en la BD solo está su hash. Escrituras públicas solo por las RPC `mark_estimate_link_opened`, `sign_estimate_via_link` y `freeze_estimate_pdf_via_link`.
+- Emails: los envían Edge Functions de Supabase con la clave de Resend del taller (`send-estimate-link` al enviar el presupuesto, `send-estimate-receipt` tras firmar, `web-intake` para la web). La app las llama con `functions.invoke`. Nunca pongas la clave de Resend en Netlify ni en el código.
+- La carpeta `supabase/` (migraciones y Edge Functions) la escribe y despliega Claude. El agente NO la modifica ni despliega nada a Supabase.
 
 <!-- BEGIN:nextjs-agent-rules -->
 

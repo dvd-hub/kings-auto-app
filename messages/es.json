@@ -737,6 +737,7 @@
     "alreadySigned": "Ya firmado",
     "alreadyDeclined": "Presupuesto rechazado",
     "thanks": "Gracias. Tu autorización se ha registrado y el presupuesto ha quedado bloqueado.",
+    "receiptSent": "Te enviamos una copia a tu email.",
     "thanksDeclined": "Gracias. Tu decisión de rechazar se ha registrado. Contacta con el taller si tienes alguna pregunta.",
     "download": "Descargar tu copia firmada",
     "downloadExpiry": "Esta descarga es válida durante 10 minutos. Actualiza esta página para obtener una nueva descarga.",
