@@ -44,3 +44,28 @@ export async function storeGeneratedDocument(client: Client, input: { shopId: st
   if (error || !data) throw new Error(error ? orderError(error) : "documentOrphan");
   return data;
 }
+
+export async function storeInvoicePdfDocument(client: Client, input: { shopId: string; orderId: string; invoiceId: string; bytes: Buffer; caption: string }) {
+  const storage_path = `${input.shopId}/ro/${input.orderId}/invoices/${input.invoiceId}.pdf`;
+  let bytes = input.bytes;
+  if (!bytes.length || bytes.length > MAX_DOCUMENT_BYTES) throw new Error("documentSize");
+  const { error: uploadError } = await client.storage.from("documents").upload(storage_path, bytes, { contentType: "application/pdf", upsert: false });
+  if (uploadError) {
+    // A previous attempt may have uploaded the immutable file before its document insert failed.
+    const { data: blob, error } = await client.storage.from("documents").download(storage_path);
+    if (error || !blob) throw new Error("documentUpload");
+    bytes = Buffer.from(await blob.arrayBuffer());
+    if (!bytes.length || bytes.length > MAX_DOCUMENT_BYTES || bytes.subarray(0, 5).toString() !== "%PDF-") throw new Error("documentRead");
+  }
+  const hash = sha256(bytes);
+  const { data, error } = await client.from("documents").insert({
+    storage_path, kind: "invoice_pdf", repair_order_id: input.orderId, mime_type: "application/pdf",
+    size_bytes: bytes.length, sha256: hash, caption: input.caption,
+  }).select("id,sha256").single();
+  if (data && !error) return data;
+  // Concurrent retries can register the same path; reuse only the matching document.
+  const { data: existing } = await client.from("documents").select("id,sha256").eq("storage_path", storage_path)
+    .eq("repair_order_id", input.orderId).eq("kind", "invoice_pdf").eq("mime_type", "application/pdf").eq("sha256", hash).is("deleted_at", null).maybeSingle();
+  if (existing) return existing;
+  throw new Error(error ? orderError(error) : "documentOrphan");
+}

@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { invoiceError } from "@/lib/invoices";
 import type { OrderResult } from "@/lib/orders";
+import { freezeInvoicePdfDocument } from "@/lib/pdf/invoice-data";
 import { fieldErrors, invoiceCreateSchema, invoiceCommandSchema, invoiceLineCommandSchema, invoiceLineSchema, invoiceIssueSchema, invoiceVoidSchema } from "@/lib/validation";
 
 async function context(orderId: string, invoiceId: string) {
@@ -82,8 +83,24 @@ export async function issueInvoice(input: unknown): Promise<OrderResult> {
   if (odometer_out < ctx.order.odometer_in) return { ok: false, fieldErrors: { odometer_out: "odometerOutLow" } };
   const { error } = await ctx.supabase.rpc("issue_invoice", { p_invoice: invoiceId, p_odometer_out: odometer_out, p_notes: notes });
   if (error) return { ok: false, error: invoiceError(error) };
+  let warning: string | undefined;
+  try { await freezeInvoicePdfDocument(ctx.supabase, orderId, invoiceId); } catch { warning = "invoicePdfPending"; }
   refresh(orderId);
-  return { ok: true, id: invoiceId };
+  return { ok: true, id: invoiceId, ...(warning ? { warning } : {}) };
+}
+
+export async function freezeInvoicePdf(input: unknown): Promise<OrderResult> {
+  const parsed = invoiceCommandSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, error: "notFound" };
+  const { orderId, invoiceId } = parsed.data;
+  const ctx = await context(orderId, invoiceId);
+  if (!ctx) return { ok: false, error: "notFound" };
+  if (ctx.invoice.status !== "issued") return { ok: false, error: "invoiceNotIssued" };
+  try {
+    const id = await freezeInvoicePdfDocument(ctx.supabase, orderId, invoiceId);
+    refresh(orderId);
+    return { ok: true, id };
+  } catch { return { ok: false, error: "invoicePdfFailed" }; }
 }
 
 export async function voidInvoice(input: unknown): Promise<OrderResult> {

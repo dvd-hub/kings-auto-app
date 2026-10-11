@@ -141,7 +141,9 @@
     "invoiceEpaMissing": "Add the shop EPA number before invoicing hazardous waste.",
     "invoiceVoidReason": "Enter a reason with at least 3 characters.",
     "invoiceNotIssued": "Only an issued invoice can be voided.",
-    "invoiceCap": "Cannot exceed the authorized quantity or unit price."
+    "invoiceCap": "Cannot exceed the authorized quantity or unit price.",
+    "invoicePdfPending": "The invoice was issued. Its saved PDF is pending. Select Generate invoice PDF to finish.",
+    "invoicePdfFailed": "The invoice PDF could not be generated or read. Try again."
   },
   "validation": {
     "required": "This field is required.",
@@ -825,6 +827,10 @@
     "notAvailable": "Not provided"
   },
   "invoices": {
+    "viewPdf": "View PDF",
+    "downloadPdf": "Download PDF",
+    "generatePdf": "Generate invoice PDF",
+    "pdfSaved": "Invoice PDF saved.",
     "title": "Invoice",
     "create": "Create invoice",
     "view": "View invoice",

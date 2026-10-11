@@ -8,7 +8,7 @@ import { customerName, vehicleLabel } from "@/lib/customers";
 import { draftInvoiceTotals, issuedInvoiceTotals, invoiceStatusVariants } from "@/lib/invoices";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/ui/status-badge";
-import { InvoiceDraft, VoidInvoiceButton } from "@/components/orders/invoice-controls";
+import { InvoiceDraft, VoidInvoiceButton, InvoicePdfRecovery } from "@/components/orders/invoice-controls";
 import { InvoiceSummary } from "@/components/orders/invoice-summary";
 
 export default async function InvoicePage({ params }: { params: Promise<{ id: string }> }) {
@@ -35,10 +35,13 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
   const totals = draft ? draftInvoiceTotals(lines, rate) : issuedInvoiceTotals(invoice);
   const authorized = draft ? (authResult.data ?? []).reduce((sum, auth) => sum + auth.amount_cents, 0) : invoice.authorized_cents!;
   const summary = <InvoiceSummary totals={totals} rate={rate} authorized={authorized} estimated={draft} />;
+  const pdfUrl = `/orders/${id}/invoices/${invoice.id}/pdf`;
   return <section className="min-w-0 space-y-6">
     <div className="flex flex-wrap items-start justify-between gap-4"><div><h1>{t("invoices.title")} <span className="font-mono">{invoice.invoice_number === null ? t("invoice_status.draft") : formatInvoiceNumber(invoice.invoice_number)}</span></h1><div className="mt-2"><StatusBadge variant={invoiceStatusVariants[invoice.status]} label={t(`invoice_status.${invoice.status}`)} /></div></div>
       <Button asChild variant="outline"><Link href={`/orders/${id}`}>{t("invoices.backToOrder", { number: formatRoNumber(order.ro_number) })}</Link></Button>
     </div>
+    <div className="flex flex-wrap gap-3"><Button asChild variant="outline"><a href={pdfUrl} target="_blank" rel="noopener noreferrer">{t("invoices.viewPdf")}</a></Button><Button asChild variant="outline"><a href={`${pdfUrl}?download=1`}>{t("invoices.downloadPdf")}</a></Button></div>
+    {!draft && !invoice.pdf_document_id && <InvoicePdfRecovery orderId={id} invoiceId={invoice.id} />}
     <div className="space-y-1 rounded-card border border-border bg-surface p-5 sm:p-6">{order.customers && <p className="font-semibold">{customerName(order.customers)}</p>}{order.vehicles && <p>{vehicleLabel(order.vehicles)}</p>}</div>
     {draft ? <InvoiceDraft orderId={id} invoiceId={invoice.id} lines={lines} odometerIn={order.odometer_in} odometerOut={order.odometer_out}>{summary}</InvoiceDraft> : <>
       <dl className="grid gap-4 rounded-card border border-border bg-surface p-5 sm:grid-cols-2 sm:p-6"><div><dt className="text-secondary-foreground">{t("invoices.issuedAt")}</dt><dd className="font-semibold">{formatDateTime(invoice.issued_at!)}</dd></div><div><dt className="text-secondary-foreground">{t("orders.odometerOut")}</dt><dd className="font-semibold">{formatMiles(invoice.odometer_out!)}</dd></div></dl>

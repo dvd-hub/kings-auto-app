@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogTitle, DialogDescription, DialogFooter } f
 import { formatMoney, formatMiles } from "@/lib/format";
 import type { InvoiceLine } from "@/lib/invoices";
 import { invoiceIssueSchema, fieldErrors, type FieldErrors } from "@/lib/validation";
-import { createInvoiceDraft, saveInvoiceLine, removeInvoiceLine, issueInvoice, discardInvoiceDraft, voidInvoice } from "@/app/(app)/orders/invoice-actions";
+import { createInvoiceDraft, saveInvoiceLine, removeInvoiceLine, issueInvoice, discardInvoiceDraft, voidInvoice, freezeInvoicePdf } from "@/app/(app)/orders/invoice-actions";
 
 export function CreateInvoiceButton({ orderId }: { orderId: string }) {
   const t = useTranslations();
@@ -99,9 +99,23 @@ export function InvoiceDraft({ orderId, invoiceId, lines, odometerIn, odometerOu
       <DialogFooter><Button variant="outline" disabled={pending} onClick={() => setDialog(null)}>{t("common.cancel")}</Button><Button variant={dialog === "discard" ? "destructive" : "default"} disabled={pending || (dialog === "issue" && unsaved)} onClick={() => start(async () => {
         const result = dialog === "discard" ? await discardInvoiceDraft({ orderId, invoiceId }) : await issueInvoice(input);
         if (!result.ok) { setErrors(result.fieldErrors ?? {}); setDialog(null); if (result.error) toast.error(t(`errors.${result.error}`)); return; }
-        setDialog(null); toast.success(t("invoices.issued")); router.refresh();
+        setDialog(null); toast.success(t("invoices.issued")); if (result.warning) toast.warning(t(`errors.${result.warning}`)); router.refresh();
       })}>{t(dialog === "discard" ? "invoices.discard" : "invoices.issue")}</Button></DialogFooter>
     </DialogContent></Dialog>
+  </div>;
+}
+
+export function InvoicePdfRecovery({ orderId, invoiceId }: { orderId: string; invoiceId: string }) {
+  const t = useTranslations();
+  const router = useRouter();
+  const [pending, start] = useTransition();
+  return <div className="space-y-3">
+    <p role="status" className="rounded-control bg-status-warning-bg p-3 text-status-warning-text">{t("errors.invoicePdfPending")}</p>
+    <Button variant="outline" disabled={pending} onClick={() => start(async () => {
+      const result = await freezeInvoicePdf({ orderId, invoiceId });
+      if (!result.ok) toast.error(t(`errors.${result.error ?? "invoicePdfFailed"}`));
+      else { toast.success(t("invoices.pdfSaved")); router.refresh(); }
+    })}>{pending ? t("common.saving") : t("invoices.generatePdf")}</Button>
   </div>;
 }
 

@@ -31,6 +31,7 @@ export async function OrderInvoice({ orderId, authorized, estimatesFailed }: { o
     {history.length > 0 && <div className="border-t border-border pt-4"><h3 className="mb-3 font-heading font-semibold">{t("invoices.voidedHistory")}</h3><ul className="divide-y divide-border">{history.map(invoice => <li key={invoice.id} className="space-y-2 py-3">
       <div className="flex flex-wrap items-center gap-3"><span className="font-mono font-semibold">{formatInvoiceNumber(invoice.invoice_number!)}</span><StatusBadge variant="danger" label={t("invoice_status.voided")} /><span className="font-mono">{formatMoney(invoice.total_cents ?? 0)}</span>{invoice.voided_at && <span className="text-sm text-secondary-foreground">{formatDateTime(invoice.voided_at)}</span>}</div>
       <p className="whitespace-pre-wrap break-words text-sm text-secondary-foreground">{invoice.void_reason}</p>
+      <div className="flex flex-wrap gap-3"><Button asChild variant="outline"><a href={`/orders/${orderId}/invoices/${invoice.id}/pdf`} target="_blank" rel="noopener noreferrer">{t("invoices.viewPdf")}</a></Button><Button asChild variant="outline"><a href={`/orders/${orderId}/invoices/${invoice.id}/pdf?download=1`}>{t("invoices.downloadPdf")}</a></Button></div>
     </li>)}</ul></div>}
   </section>;
 }

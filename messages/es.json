@@ -141,7 +141,9 @@
     "invoiceEpaMissing": "Añade el número EPA del taller antes de facturar residuos peligrosos.",
     "invoiceVoidReason": "Escribe un motivo de al menos 3 caracteres.",
     "invoiceNotIssued": "Solo se puede anular una factura emitida.",
-    "invoiceCap": "No puede superar lo autorizado."
+    "invoiceCap": "No puede superar lo autorizado.",
+    "invoicePdfPending": "La factura se ha emitido. Su PDF guardado está pendiente. Selecciona Generar PDF de factura para terminar.",
+    "invoicePdfFailed": "No se pudo generar o leer el PDF de la factura. Inténtalo de nuevo."
   },
   "validation": {
     "required": "Este campo es obligatorio.",
@@ -825,6 +827,10 @@
     "notAvailable": "No indicado"
   },
   "invoices": {
+    "viewPdf": "Ver PDF",
+    "downloadPdf": "Descargar PDF",
+    "generatePdf": "Generar PDF de factura",
+    "pdfSaved": "PDF de factura guardado.",
     "title": "Factura",
     "create": "Crear factura",
     "view": "Ver factura",
