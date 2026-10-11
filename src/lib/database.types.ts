@@ -821,6 +821,252 @@ export type Database = {
           },
         ]
       }
+      invoice_lines: {
+        Row: {
+          amount_cents: number | null
+          authorized_quantity: number
+          authorized_unit_price_cents: number
+          brand: string | null
+          crash_part_origin:
+            | Database["public"]["Enums"]["crash_part_origin"]
+            | null
+          created_at: string
+          deleted_at: string | null
+          description: string
+          estimate_id: string
+          id: string
+          invoice_id: string
+          is_crash_part: boolean | null
+          labor_type: Database["public"]["Enums"]["labor_type"] | null
+          line_type: Database["public"]["Enums"]["estimate_line_type"]
+          non_returnable: boolean | null
+          paint_materials_method:
+            | Database["public"]["Enums"]["paint_materials_method"]
+            | null
+          part_condition: Database["public"]["Enums"]["part_condition"] | null
+          part_number: string | null
+          position: number
+          quantity: number
+          shop_id: string
+          source_line_id: string
+          sublet_vendor_address: string | null
+          sublet_vendor_name: string | null
+          taxable: boolean
+          teardown_role: Database["public"]["Enums"]["teardown_role"] | null
+          unit_price_cents: number
+          updated_at: string
+        }
+        Insert: {
+          amount_cents?: number | null
+          authorized_quantity: number
+          authorized_unit_price_cents: number
+          brand?: string | null
+          crash_part_origin?:
+            | Database["public"]["Enums"]["crash_part_origin"]
+            | null
+          created_at?: string
+          deleted_at?: string | null
+          description: string
+          estimate_id: string
+          id?: string
+          invoice_id: string
+          is_crash_part?: boolean | null
+          labor_type?: Database["public"]["Enums"]["labor_type"] | null
+          line_type: Database["public"]["Enums"]["estimate_line_type"]
+          non_returnable?: boolean | null
+          paint_materials_method?:
+            | Database["public"]["Enums"]["paint_materials_method"]
+            | null
+          part_condition?: Database["public"]["Enums"]["part_condition"] | null
+          part_number?: string | null
+          position: number
+          quantity: number
+          shop_id: string
+          source_line_id: string
+          sublet_vendor_address?: string | null
+          sublet_vendor_name?: string | null
+          taxable: boolean
+          teardown_role?: Database["public"]["Enums"]["teardown_role"] | null
+          unit_price_cents: number
+          updated_at?: string
+        }
+        Update: {
+          amount_cents?: number | null
+          authorized_quantity?: number
+          authorized_unit_price_cents?: number
+          brand?: string | null
+          crash_part_origin?:
+            | Database["public"]["Enums"]["crash_part_origin"]
+            | null
+          created_at?: string
+          deleted_at?: string | null
+          description?: string
+          estimate_id?: string
+          id?: string
+          invoice_id?: string
+          is_crash_part?: boolean | null
+          labor_type?: Database["public"]["Enums"]["labor_type"] | null
+          line_type?: Database["public"]["Enums"]["estimate_line_type"]
+          non_returnable?: boolean | null
+          paint_materials_method?:
+            | Database["public"]["Enums"]["paint_materials_method"]
+            | null
+          part_condition?: Database["public"]["Enums"]["part_condition"] | null
+          part_number?: string | null
+          position?: number
+          quantity?: number
+          shop_id?: string
+          source_line_id?: string
+          sublet_vendor_address?: string | null
+          sublet_vendor_name?: string | null
+          taxable?: boolean
+          teardown_role?: Database["public"]["Enums"]["teardown_role"] | null
+          unit_price_cents?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoice_lines_estimate_id_shop_id_fkey"
+            columns: ["estimate_id", "shop_id"]
+            isOneToOne: false
+            referencedRelation: "estimate_totals"
+            referencedColumns: ["estimate_id", "shop_id"]
+          },
+          {
+            foreignKeyName: "invoice_lines_estimate_id_shop_id_fkey"
+            columns: ["estimate_id", "shop_id"]
+            isOneToOne: false
+            referencedRelation: "estimates"
+            referencedColumns: ["id", "shop_id"]
+          },
+          {
+            foreignKeyName: "invoice_lines_invoice_id_shop_id_fkey"
+            columns: ["invoice_id", "shop_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id", "shop_id"]
+          },
+          {
+            foreignKeyName: "invoice_lines_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      invoices: {
+        Row: {
+          authorized_cents: number | null
+          created_at: string
+          created_by: string | null
+          deleted_at: string | null
+          hazardous_waste_cents: number | null
+          id: string
+          invoice_number: number | null
+          issued_at: string | null
+          issued_by: string | null
+          labor_cents: number | null
+          materials_cents: number | null
+          notes: string | null
+          odometer_out: number | null
+          parts_cents: number | null
+          pdf_document_id: string | null
+          pdf_sha256: string | null
+          repair_order_id: string
+          shop_id: string
+          status: Database["public"]["Enums"]["invoice_status"]
+          sublet_cents: number | null
+          tax_cents: number | null
+          tax_rate: number | null
+          taxable_cents: number | null
+          total_cents: number | null
+          updated_at: string
+          void_reason: string | null
+          voided_at: string | null
+        }
+        Insert: {
+          authorized_cents?: number | null
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          hazardous_waste_cents?: number | null
+          id?: string
+          invoice_number?: number | null
+          issued_at?: string | null
+          issued_by?: string | null
+          labor_cents?: number | null
+          materials_cents?: number | null
+          notes?: string | null
+          odometer_out?: number | null
+          parts_cents?: number | null
+          pdf_document_id?: string | null
+          pdf_sha256?: string | null
+          repair_order_id: string
+          shop_id?: string
+          status?: Database["public"]["Enums"]["invoice_status"]
+          sublet_cents?: number | null
+          tax_cents?: number | null
+          tax_rate?: number | null
+          taxable_cents?: number | null
+          total_cents?: number | null
+          updated_at?: string
+          void_reason?: string | null
+          voided_at?: string | null
+        }
+        Update: {
+          authorized_cents?: number | null
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          hazardous_waste_cents?: number | null
+          id?: string
+          invoice_number?: number | null
+          issued_at?: string | null
+          issued_by?: string | null
+          labor_cents?: number | null
+          materials_cents?: number | null
+          notes?: string | null
+          odometer_out?: number | null
+          parts_cents?: number | null
+          pdf_document_id?: string | null
+          pdf_sha256?: string | null
+          repair_order_id?: string
+          shop_id?: string
+          status?: Database["public"]["Enums"]["invoice_status"]
+          sublet_cents?: number | null
+          tax_cents?: number | null
+          tax_rate?: number | null
+          taxable_cents?: number | null
+          total_cents?: number | null
+          updated_at?: string
+          void_reason?: string | null
+          voided_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoices_pdf_document_id_shop_id_fkey"
+            columns: ["pdf_document_id", "shop_id"]
+            isOneToOne: false
+            referencedRelation: "documents"
+            referencedColumns: ["id", "shop_id"]
+          },
+          {
+            foreignKeyName: "invoices_repair_order_id_shop_id_fkey"
+            columns: ["repair_order_id", "shop_id"]
+            isOneToOne: false
+            referencedRelation: "repair_orders"
+            referencedColumns: ["id", "shop_id"]
+          },
+          {
+            foreignKeyName: "invoices_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       labor_rates: {
         Row: {
           created_at: string
@@ -1568,7 +1814,12 @@ export type Database = {
       }
     }
     Functions: {
+      create_invoice_draft: {
+        Args: { p_repair_order: string }
+        Returns: string
+      }
       current_shop_id: { Args: never; Returns: string }
+      discard_invoice_draft: { Args: { p_invoice: string }; Returns: undefined }
       freeze_estimate_pdf_via_link: {
         Args: {
           p_sha256: string
@@ -1577,6 +1828,52 @@ export type Database = {
           p_token_hash: string
         }
         Returns: string
+      }
+      freeze_invoice_pdf: {
+        Args: { p_document: string; p_invoice: string }
+        Returns: undefined
+      }
+      invoice_for_update: {
+        Args: { p_invoice: string }
+        Returns: {
+          authorized_cents: number | null
+          created_at: string
+          created_by: string | null
+          deleted_at: string | null
+          hazardous_waste_cents: number | null
+          id: string
+          invoice_number: number | null
+          issued_at: string | null
+          issued_by: string | null
+          labor_cents: number | null
+          materials_cents: number | null
+          notes: string | null
+          odometer_out: number | null
+          parts_cents: number | null
+          pdf_document_id: string | null
+          pdf_sha256: string | null
+          repair_order_id: string
+          shop_id: string
+          status: Database["public"]["Enums"]["invoice_status"]
+          sublet_cents: number | null
+          tax_cents: number | null
+          tax_rate: number | null
+          taxable_cents: number | null
+          total_cents: number | null
+          updated_at: string
+          void_reason: string | null
+          voided_at: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "invoices"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      issue_invoice: {
+        Args: { p_invoice: string; p_notes: string; p_odometer_out: number }
+        Returns: number
       }
       mark_estimate_link_opened: {
         Args: { p_token_hash: string }
@@ -1634,6 +1931,10 @@ export type Database = {
         }
         Returns: string
       }
+      void_invoice: {
+        Args: { p_invoice: string; p_reason: string }
+        Returns: undefined
+      }
       web_intake_attach_photos: {
         Args: { p_paths: string[]; p_request: string; p_shop: string }
         Returns: number
@@ -1686,6 +1987,7 @@ export type Database = {
         | "signature"
         | "authorization_proof"
         | "other"
+        | "invoice_pdf"
       estimate_basis: "shop" | "third_party"
       estimate_kind: "teardown" | "repair" | "supplement"
       estimate_line_type:
@@ -1696,6 +1998,7 @@ export type Database = {
         | "sublet"
         | "hazardous_waste"
       estimate_status: "draft" | "sent" | "authorized" | "declined" | "voided"
+      invoice_status: "draft" | "issued" | "voided"
       labor_type: "body" | "paint" | "mechanical" | "frame" | "other"
       paint_materials_method: "hourly_rate" | "actual_cost"
       part_condition: "new" | "used" | "rebuilt" | "reconditioned"
@@ -1892,6 +2195,7 @@ export const Constants = {
         "signature",
         "authorization_proof",
         "other",
+        "invoice_pdf",
       ],
       estimate_basis: ["shop", "third_party"],
       estimate_kind: ["teardown", "repair", "supplement"],
@@ -1904,6 +2208,7 @@ export const Constants = {
         "hazardous_waste",
       ],
       estimate_status: ["draft", "sent", "authorized", "declined", "voided"],
+      invoice_status: ["draft", "issued", "voided"],
       labor_type: ["body", "paint", "mechanical", "frame", "other"],
       paint_materials_method: ["hourly_rate", "actual_cost"],
       part_condition: ["new", "used", "rebuilt", "reconditioned"],

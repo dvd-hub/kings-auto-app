@@ -243,6 +243,19 @@ export const estimateLineSchema = z.object({
 export const orderActivitySchema = z.object({ repair_order_id: z.uuid(), kind: z.enum(["note", "call"], { message: "required" }), body: z.string().trim().min(1, "required").max(5000, "tooLong") });
 export const orderStatusSchema = z.object({ id: z.uuid(), status: z.enum(["open", "in_progress", "completed", "delivered", "cancelled"]) });
 export const productionStageSchema = z.object({ id: z.uuid(), production_stage_id: z.uuid() });
+export const invoiceCreateSchema = z.object({ orderId: z.uuid() });
+export const invoiceCommandSchema = z.object({ orderId: z.uuid(), invoiceId: z.uuid() });
+export const invoiceLineCommandSchema = invoiceCommandSchema.extend({ lineId: z.uuid(), updatedAt: z.string().min(1) });
+export const invoiceLineSchema = invoiceLineCommandSchema.extend({
+  quantity: z.string().trim().regex(/^\d+(?:\.\d{1,2})?$/, "invalidQuantity").transform(Number).refine(n => n > 0 && n <= 99_999_999.99, "invalidQuantity"),
+  unit_price_cents: moneyField(2_147_483_647).pipe(z.number({ message: "required" })),
+  taxable: z.boolean(),
+});
+export const invoiceIssueSchema = invoiceCommandSchema.extend({
+  odometer_out: orderInteger(true).pipe(z.number()),
+  notes: z.string().trim().max(2000, "tooLong"),
+});
+export const invoiceVoidSchema = invoiceCommandSchema.extend({ reason: z.string().trim().min(3, "voidReasonRequired").max(2000, "tooLong") });
 export const estimateCommandSchema = z.object({ orderId: z.uuid(), estimateId: z.uuid(), command: z.enum(["sent", "draft", "voided"]) });
 export const estimateCreateSchema = z.object({ orderId: z.uuid(), kind: z.enum(["teardown", "repair", "supplement"]), parentEstimateId: z.uuid().optional() }).superRefine((v, ctx) => {
   if ((v.kind === "supplement") !== Boolean(v.parentEstimateId)) ctx.addIssue({ code: "custom", path: ["parentEstimateId"], message: "supplementParentInvalid" });

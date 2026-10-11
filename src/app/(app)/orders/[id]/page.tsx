@@ -15,6 +15,7 @@ import { formatRoNumber, formatMoney, formatDateTime, formatMiles, formatPhone }
 import { OrderDocuments } from "@/components/orders/order-documents";
 import { signedDocuments } from "@/lib/documents";
 import type { SignedDocument } from "@/lib/document-shared";
+import { OrderInvoice } from "@/components/orders/order-invoice";
 
 export default async function OrderPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -63,6 +64,7 @@ export default async function OrderPage({ params }: { params: Promise<{ id: stri
         {authorizations.get(estimate.id) && <span className="w-full text-sm text-secondary-foreground">{t(`authorization.method.${authorizations.get(estimate.id)!.method}`)} · {formatDateTime(authorizations.get(estimate.id)!.authorized_at)}</span>}
       </Link></li>)}</ul>}
     </div>
+    <OrderInvoice orderId={id} authorized={Boolean(estimatesResult.data?.some(estimate => estimate.status === "authorized"))} estimatesFailed={Boolean(estimatesResult.error)} />
     <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,380px)]">
       <div className="rounded-card border border-border bg-surface p-5 sm:p-6"><h2 className="mb-4">{t("customers.history")}</h2>{activitiesResult.error ? <p role="alert">{t("errors.load")}</p> : !activitiesResult.data?.length ? <p>{t("customers.noHistory")}</p> : <ol className="space-y-4">{activitiesResult.data.map((activity) => <li key={activity.id} className="border-l-2 border-border pl-3"><div className="flex flex-wrap items-center gap-2"><StatusBadge variant={activity.kind === "status_change" ? "info" : "neutral"} label={t(`activityKind.${activity.kind}`)} /><span className="text-sm text-secondary-foreground">{formatDateTime(activity.occurred_at)}</span></div><p className="mt-1 whitespace-pre-wrap break-words">{orderActivityText(activity.body, t)}</p></li>)}</ol>}</div>
       <div className="rounded-card border border-border bg-surface p-5 sm:p-6"><h2 className="mb-4">{t("customers.addEntry")}</h2><OrderActivityForm orderId={id} /></div>

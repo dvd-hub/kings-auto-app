@@ -129,7 +129,19 @@
     "estimateLinkFailed": "No se pudo crear o cancelar el enlace de firma. Actualiza e inténtalo de nuevo.",
     "estimateEmailNotConfigured": "El envío de emails no está configurado. Pide al administrador del taller que revise la Edge Function.",
     "estimateEmailAuth": "Tu sesión ha caducado. Inicia sesión de nuevo antes de enviar.",
-    "estimateEmailInvalid": "Revisa el email del destinatario y los datos del presupuesto."
+    "estimateEmailInvalid": "Revisa el email del destinatario y los datos del presupuesto.",
+    "invoiceAlreadyExists": "Esta orden ya tiene una factura activa.",
+    "invoiceNoAuthorization": "Autoriza un presupuesto antes de crear una factura.",
+    "invoiceOrderCancelled": "No se puede facturar una orden cancelada.",
+    "invoiceNotDraft": "Esta factura ya no es un borrador.",
+    "invoiceNoLines": "La factura debe tener al menos una línea.",
+    "invoiceExceedsAuthorization": "El subtotal de la factura no puede superar el importe autorizado.",
+    "invoiceOdometerLow": "El odómetro de salida debe ser al menos el de entrada.",
+    "invoiceBarMissing": "Añade el número de registro BAR del taller antes de emitir una factura.",
+    "invoiceEpaMissing": "Añade el número EPA del taller antes de facturar residuos peligrosos.",
+    "invoiceVoidReason": "Escribe un motivo de al menos 3 caracteres.",
+    "invoiceNotIssued": "Solo se puede anular una factura emitida.",
+    "invoiceCap": "No puede superar lo autorizado."
   },
   "validation": {
     "required": "Este campo es obligatorio.",
@@ -157,7 +169,8 @@
     "tooLong": "Este texto es demasiado largo.",
     "authorizationDateRange": "Usa la hora del taller: sin fechas futuras ni más de 7 días atrás.",
     "signatureRequired": "El cliente debe firmar antes de guardar.",
-    "supplementParentInvalid": "Elige una reparación o suplemento autorizado de esta orden."
+    "supplementParentInvalid": "Elige una reparación o suplemento autorizado de esta orden.",
+    "voidReasonRequired": "Escribe un motivo de al menos 3 caracteres."
   },
   "customerType": {
     "individual": "Particular",
@@ -481,7 +494,9 @@
     "appointmentLinkedActivity": "Cita enlazada a la orden.",
     "appointmentUnlinkedActivity": "Cita desvinculada de la orden.",
     "appointmentCreatedActivity": "Cita creada para la orden.",
-    "estimateEmailedActivity": "{kind} {seq} enviado por email a {email}."
+    "estimateEmailedActivity": "{kind} {seq} enviado por email a {email}.",
+    "invoiceIssuedActivity": "Factura {number} emitida por {total}.",
+    "invoiceVoidedActivity": "Factura {number} anulada."
   },
   "estimates": {
     "markSent": "Marcar como enviado",
@@ -808,5 +823,58 @@
       "rateLimited": "Demasiados intentos. Espera un minuto antes de intentarlo de nuevo."
     },
     "notAvailable": "No indicado"
+  },
+  "invoices": {
+    "title": "Factura",
+    "create": "Crear factura",
+    "view": "Ver factura",
+    "noInvoice": "No hay una factura activa.",
+    "voidedHistory": "Facturas anuladas",
+    "lines": "Líneas de la factura",
+    "descriptionType": "Descripción / tipo",
+    "quantity": "Cantidad",
+    "unitPrice": "Precio unitario",
+    "amount": "Importe",
+    "taxable": "Tributa",
+    "actions": "Acciones",
+    "authorized": "Autorizado: {value}",
+    "removeLine": "Quitar línea",
+    "removeLineLabel": "Quitar línea: {description}",
+    "removeLineConfirm": "¿Quitar «{description}» de este borrador? Las líneas quitadas no se pueden restaurar.",
+    "taxableLine": "Tributa: {description}",
+    "noLines": "No hay líneas en la factura.",
+    "lineSaved": "Línea de factura guardada.",
+    "lineRemoved": "Línea de factura quitada.",
+    "summary": "Resumen",
+    "parts": "Piezas",
+    "labor": "Mano de obra",
+    "materials": "Materiales",
+    "sublet": "Subcontratas",
+    "hazardous": "Residuos peligrosos",
+    "subtotal": "Subtotal",
+    "taxableBase": "Base imponible",
+    "tax": "Impuesto sobre ventas ({rate})",
+    "estimatedTax": "Impuesto sobre ventas — Estimado ({rate})",
+    "total": "Total",
+    "authorizedTotal": "Total autorizado",
+    "authorizedHelp": "Importe autorizado antes del impuesto sobre ventas.",
+    "estimatedHelp": "El impuesto es estimado. La base de datos calcula el impuesto y el total definitivos al emitir la factura.",
+    "issue": "Emitir factura",
+    "issued": "Factura emitida.",
+    "discard": "Descartar borrador",
+    "discardConfirm": "¿Descartar este borrador de factura? Puedes crear otro a partir de los presupuestos autorizados.",
+    "issueConfirm": "¿Emitir esta factura? Después no se podrán editar sus líneas, odómetro, notas ni totales.",
+    "odometerMinimum": "Debe ser al menos el odómetro de entrada: {value}.",
+    "saveLinesFirst": "Guarda los cambios de las líneas antes de emitir la factura. El resumen muestra las líneas guardadas.",
+    "void": "Anular factura",
+    "voidReason": "Motivo de anulación",
+    "voidConfirm": "¿Anular esta factura emitida? Se conservará en el historial de la orden. Escribe un motivo de al menos 3 caracteres.",
+    "backToOrder": "Volver a {number}",
+    "issuedAt": "Fecha de emisión"
+  },
+  "invoice_status": {
+    "draft": "Borrador",
+    "issued": "Emitida",
+    "voided": "Anulada"
   }
 }

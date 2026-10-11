@@ -18,7 +18,7 @@ type StringKey = { [K in keyof Values]: Values[K] extends string ? K : never }[k
 
 export function LineEditor({ orderId, estimateId, kind, line, epaAvailable, onClose }: { orderId: string; estimateId: string; kind: "teardown" | "repair" | "supplement"; line: EstimateLine | null; epaAvailable: boolean; onClose: () => void }) {
   const t = useTranslations();
-  const [values, setValues] = useState<Values>({ line_type: line?.line_type ?? "part", description: line?.description ?? "", quantity: line ? String(line.quantity) : "1", unit_price_cents: line ? formatMoney(line.unit_price_cents) : "", taxable: line?.taxable ?? false, part_condition: line?.part_condition ?? "", is_crash_part: line?.is_crash_part === null || !line ? "" : String(line.is_crash_part), crash_part_origin: line?.crash_part_origin ?? "", part_number: line?.part_number ?? "", brand: line?.brand ?? "", non_returnable: line?.non_returnable ?? false, labor_type: line?.labor_type ?? "", paint_materials_method: line?.paint_materials_method ?? "", sublet_vendor_name: line?.sublet_vendor_name ?? "", sublet_vendor_address: line?.sublet_vendor_address ?? "", teardown_role: line?.teardown_role ?? "" });
+  const [values, setValues] = useState<Values>({ line_type: line?.line_type ?? "part", description: line?.description ?? "", quantity: line ? String(line.quantity) : "1", unit_price_cents: line ? formatMoney(line.unit_price_cents) : "", taxable: line?.taxable ?? true, part_condition: line?.part_condition ?? "", is_crash_part: line?.is_crash_part === null || !line ? "" : String(line.is_crash_part), crash_part_origin: line?.crash_part_origin ?? "", part_number: line?.part_number ?? "", brand: line?.brand ?? "", non_returnable: line?.non_returnable ?? false, labor_type: line?.labor_type ?? "", paint_materials_method: line?.paint_materials_method ?? "", sublet_vendor_name: line?.sublet_vendor_name ?? "", sublet_vendor_address: line?.sublet_vendor_address ?? "", teardown_role: line?.teardown_role ?? "" });
   const [errors, setErrors] = useState<FieldErrors>({});
   const [pending, start] = useTransition();
   const set = (key: StringKey) => (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => setValues((v) => ({ ...v, [key]: event.target.value }));
@@ -36,7 +36,7 @@ export function LineEditor({ orderId, estimateId, kind, line, epaAvailable, onCl
         toast.success(t("estimates.lineSaved")); onClose();
       });
     }}>
-      <Field id="line_type" label={t("estimates.lineType")} error={errors.line_type}><Select {...fieldAria("line_type", errors.line_type)} value={values.line_type} onChange={(event) => setValues((v) => ({ ...v, line_type: event.target.value, teardown_role: "" }))}>
+      <Field id="line_type" label={t("estimates.lineType")} error={errors.line_type}><Select {...fieldAria("line_type", errors.line_type)} value={values.line_type} onChange={(event) => setValues((v) => ({ ...v, line_type: event.target.value, teardown_role: "", ...(!line ? { taxable: ["part", "paint_materials", "materials"].includes(event.target.value) } : {}) }))}>
         {Constants.public.Enums.estimate_line_type.map((v) => <option key={v} value={v} disabled={v === "hazardous_waste" && !epaAvailable}>{t(`estimate_line_type.${v}`)}</option>)}
       </Select></Field>
       {!epaAvailable && <p className="text-sm text-secondary-foreground">{t("estimates.epaHint")}</p>}

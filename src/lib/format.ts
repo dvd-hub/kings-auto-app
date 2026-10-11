@@ -30,6 +30,10 @@ export function formatRoNumber(n: number): string {
   return `RO-${String(n).padStart(5, "0")}`;
 }
 
+export function formatInvoiceNumber(n: number): string {
+  return `INV-${String(n).padStart(5, "0")}`;
+}
+
 /** Parse US currency using integer arithmetic, including a single decimal digit. */
 export function parseMoneyToCents(text: string): number | null {
   const match = /^\$?((?:\d{1,3}(?:,\d{3})+)|\d+)(?:\.(\d{1,2}))?$/.exec(text.trim());

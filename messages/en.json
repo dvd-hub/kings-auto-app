@@ -129,7 +129,19 @@
     "estimateLinkFailed": "The signing link could not be created or cancelled. Refresh and try again.",
     "estimateEmailNotConfigured": "Email sending is not configured. Ask the workshop administrator to check the Edge Function settings.",
     "estimateEmailAuth": "Your session expired. Sign in again before sending.",
-    "estimateEmailInvalid": "Check the recipient email and estimate details."
+    "estimateEmailInvalid": "Check the recipient email and estimate details.",
+    "invoiceAlreadyExists": "This order already has an active invoice.",
+    "invoiceNoAuthorization": "Authorize an estimate before creating an invoice.",
+    "invoiceOrderCancelled": "A cancelled order cannot be invoiced.",
+    "invoiceNotDraft": "This invoice is no longer a draft.",
+    "invoiceNoLines": "The invoice must have at least one line.",
+    "invoiceExceedsAuthorization": "The invoice subtotal cannot exceed the authorized amount.",
+    "invoiceOdometerLow": "The outgoing odometer must be at least the incoming odometer.",
+    "invoiceBarMissing": "Add the shop BAR registration number before issuing an invoice.",
+    "invoiceEpaMissing": "Add the shop EPA number before invoicing hazardous waste.",
+    "invoiceVoidReason": "Enter a reason with at least 3 characters.",
+    "invoiceNotIssued": "Only an issued invoice can be voided.",
+    "invoiceCap": "Cannot exceed the authorized quantity or unit price."
   },
   "validation": {
     "required": "This field is required.",
@@ -157,7 +169,8 @@
     "tooLong": "This text is too long.",
     "authorizationDateRange": "Use workshop time, no future date and no more than 7 days ago.",
     "signatureRequired": "The customer must sign before saving.",
-    "supplementParentInvalid": "Select an authorized repair estimate or supplement from this order."
+    "supplementParentInvalid": "Select an authorized repair estimate or supplement from this order.",
+    "voidReasonRequired": "Enter a reason with at least 3 characters."
   },
   "customerType": {
     "individual": "Individual",
@@ -481,7 +494,9 @@
     "appointmentLinkedActivity": "Appointment linked to the order.",
     "appointmentUnlinkedActivity": "Appointment unlinked from the order.",
     "appointmentCreatedActivity": "Appointment created for the order.",
-    "estimateEmailedActivity": "{kind} {seq} emailed to {email}."
+    "estimateEmailedActivity": "{kind} {seq} emailed to {email}.",
+    "invoiceIssuedActivity": "Invoice {number} issued for {total}.",
+    "invoiceVoidedActivity": "Invoice {number} voided."
   },
   "estimates": {
     "markSent": "Mark as sent",
@@ -808,5 +823,58 @@
       "rateLimited": "Too many attempts. Please wait a minute before trying again."
     },
     "notAvailable": "Not provided"
+  },
+  "invoices": {
+    "title": "Invoice",
+    "create": "Create invoice",
+    "view": "View invoice",
+    "noInvoice": "No active invoice.",
+    "voidedHistory": "Voided invoices",
+    "lines": "Invoice lines",
+    "descriptionType": "Description / type",
+    "quantity": "Quantity",
+    "unitPrice": "Unit price",
+    "amount": "Amount",
+    "taxable": "Taxable",
+    "actions": "Actions",
+    "authorized": "Authorized: {value}",
+    "removeLine": "Remove line",
+    "removeLineLabel": "Remove line: {description}",
+    "removeLineConfirm": "Remove “{description}” from this draft? Removed lines cannot be restored.",
+    "taxableLine": "Taxable: {description}",
+    "noLines": "No invoice lines.",
+    "lineSaved": "Invoice line saved.",
+    "lineRemoved": "Invoice line removed.",
+    "summary": "Summary",
+    "parts": "Parts",
+    "labor": "Labor",
+    "materials": "Materials",
+    "sublet": "Sublet",
+    "hazardous": "Hazardous waste",
+    "subtotal": "Subtotal",
+    "taxableBase": "Taxable base",
+    "tax": "Sales tax ({rate})",
+    "estimatedTax": "Sales tax — Estimated ({rate})",
+    "total": "Total",
+    "authorizedTotal": "Authorized total",
+    "authorizedHelp": "Authorized amount before sales tax.",
+    "estimatedHelp": "Tax is estimated. The database calculates the final tax and total when the invoice is issued.",
+    "issue": "Issue invoice",
+    "issued": "Invoice issued.",
+    "discard": "Discard draft",
+    "discardConfirm": "Discard this invoice draft? You can create a new draft from the authorized estimates.",
+    "issueConfirm": "Issue this invoice? Its lines, odometer, notes and totals cannot be edited afterward.",
+    "odometerMinimum": "Must be at least the incoming odometer: {value}.",
+    "saveLinesFirst": "Save the line changes before issuing the invoice. The summary shows saved lines.",
+    "void": "Void invoice",
+    "voidReason": "Reason for voiding",
+    "voidConfirm": "Void this issued invoice? It will be kept in the order history. Enter a reason with at least 3 characters.",
+    "backToOrder": "Back to {number}",
+    "issuedAt": "Issued at"
+  },
+  "invoice_status": {
+    "draft": "Draft",
+    "issued": "Issued",
+    "voided": "Voided"
   }
 }
