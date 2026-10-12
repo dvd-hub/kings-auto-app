@@ -13,7 +13,7 @@ import { Sheet, SheetContent, SheetTrigger, SheetTitle, SheetClose } from "@/com
 import { createClient } from "@/lib/supabase/client";
 
 const links: ReadonlyArray<{ href: string; key: "home" | "customers" | "orders" | "production" | "calendar" | "crm" | "classics" | "billing" | "settings"; icon: LucideIcon }> = [
-  { href: "/", key: "home", icon: LayoutDashboard },
+  { href: "/dashboard", key: "home", icon: LayoutDashboard },
   { href: "/customers", key: "customers", icon: Users },
   { href: "/orders", key: "orders", icon: ClipboardList },
   { href: "/production", key: "production", icon: Columns3 },

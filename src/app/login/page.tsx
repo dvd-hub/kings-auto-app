@@ -35,7 +35,7 @@ export default function LoginPage() {
         email: String(form.get("email")), password: String(form.get("password")),
       });
       if (error) setError(t("loginError"));
-      else { router.replace("/"); router.refresh(); }
+      else { router.replace("/dashboard"); router.refresh(); }
     } catch { setError(c("configurationError")); }
     finally { setBusy(false); }
   }

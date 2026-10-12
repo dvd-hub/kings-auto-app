@@ -3,7 +3,8 @@ import { getT } from "@/i18n/server";
 import { createClient } from "@/lib/supabase/server";
 import { customerName, vehicleLabel, type Customer, type Vehicle } from "@/lib/customers";
 import { formatInvoiceNumber, formatMoney, formatRoNumber } from "@/lib/format";
-import { balanceStatus, paymentStatusVariants, type RoBalance } from "@/lib/payments";
+import { balanceStatus, paymentStatusVariants } from "@/lib/payments";
+import { getBillingBalances, totalPending } from "@/lib/billing";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/ui/status-badge";
 
@@ -15,16 +16,11 @@ export default async function BillingPage({ searchParams }: { searchParams: Prom
   const selected = search.status === "overpaid" || search.status === "deposit" ? search.status : "receivable";
   const t = await getT();
   const supabase = await createClient();
-  const balances: RoBalance[] = [];
-  // Fetch every applicable view row so the receivable total is never truncated.
-  for (let offset = 0; ; offset += 1000) {
-    const result = await supabase.from("ro_balances").select("*").in("payment_status", ["unpaid", "partial", "overpaid", "deposit"]).order("repair_order_id").range(offset, offset + 999);
-    if (result.error) return <p role="alert">{t("errors.load")}</p>;
-    balances.push(...result.data);
-    if (result.data.length < 1000) break;
-  }
+  const balanceResult = await getBillingBalances(supabase);
+  if (balanceResult.error) return <p role="alert">{t("errors.load")}</p>;
+  const balances = balanceResult.data;
   const rows = balances.filter(row => (filters[selected] as readonly string[]).includes(row.payment_status ?? ""));
-  const totalPending = balances.filter(row => row.payment_status === "unpaid" || row.payment_status === "partial").reduce((total, row) => total + (row.balance_cents ?? 0), 0);
+  const pending = totalPending(balances);
   const orders = new Map<string, BillingOrder>();
   const invoiceNumbers = new Map<string, number | null>();
   for (let offset = 0; offset < rows.length; offset += 100) {
@@ -42,7 +38,7 @@ export default async function BillingPage({ searchParams }: { searchParams: Prom
   rows.sort((a, b) => (orders.get(b.repair_order_id ?? "")?.ro_number ?? 0) - (orders.get(a.repair_order_id ?? "")?.ro_number ?? 0));
   return <section className="min-w-0 space-y-5">
     <h1>{t("billing.title")}</h1>
-    <div className="rounded-card border border-border bg-surface p-5 sm:p-6"><p className="text-secondary-foreground">{t("billing.totalPending")}</p><p className="mt-2 font-mono text-2xl font-semibold">{formatMoney(totalPending)}</p></div>
+    <div className="rounded-card border border-border bg-surface p-5 sm:p-6"><p className="text-secondary-foreground">{t("billing.totalPending")}</p><p className="mt-2 font-mono text-2xl font-semibold">{formatMoney(pending)}</p></div>
     <div className="flex flex-wrap gap-2" role="group" aria-label={t("billing.filterStatus")}>{(Object.keys(filters) as (keyof typeof filters)[]).map(filter => <Button asChild variant="outline" key={filter} className={selected === filter ? "border-foreground bg-muted" : ""}><Link href={`/billing?status=${filter}`} aria-current={selected === filter ? "page" : undefined}>{t(`billing.filters.${filter}`)}</Link></Button>)}</div>
     {rows.length === 0 ? <p className="text-secondary-foreground">{t("billing.empty")}</p> : <div className="overflow-x-auto rounded-card border border-border bg-surface"><table className="w-full text-left text-sm"><caption className="sr-only">{t("billing.title")}</caption>
       <thead className="bg-muted text-secondary-foreground"><tr>{(["ro", "customer", "vehicle", "invoice", "total", "paid", "balance", "status"] as const).map(key => <th key={key} scope="col" className="px-4 py-3 font-semibold">{t(`billing.${key}`)}</th>)}</tr></thead>

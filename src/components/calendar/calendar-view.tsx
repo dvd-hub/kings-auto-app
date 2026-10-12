@@ -54,7 +54,7 @@ function lanes(items: CalendarAppointment[]) {
 export function CalendarView(props: {
   view: CalendarViewName; date: string; today: string; days: string[]; heading: string; weekdayLabels: string[];
   prevDate: string; nextDate: string; appointments: CalendarAppointment[]; loadError: boolean;
-  openNew: boolean; preselected: { id: string; name: string } | null; title: string;
+  openNew: boolean; selectedAppointmentId?: string; preselected: { id: string; name: string } | null; title: string;
 }) {
   const { view, date, today, days, appointments } = props;
   const t = useTranslations("calendar");
@@ -64,7 +64,8 @@ export function CalendarView(props: {
   const pathname = usePathname();
   const [draft, setDraft] = useState<AppointmentDraft | null>(
     props.openNew ? { date: today, time: "09:00", customer: props.preselected } : null);
-  const [selected, setSelected] = useState<CalendarAppointment | null>(null);
+  const [selected, setSelected] = useState<CalendarAppointment | null>(
+    appointments.find(a => a.id === props.selectedAppointmentId) ?? null);
 
   const href = (params: { view?: CalendarViewName; date?: string }) =>
     `${pathname}?${new URLSearchParams({ view: params.view ?? view, date: params.date ?? date })}`;
@@ -185,7 +186,10 @@ export function CalendarView(props: {
     {outside.length > 0 && <div className="flex flex-wrap gap-2">{outside.map((a) => block(a, "min-h-11"))}</div>}
 
     <AppointmentForm draft={draft} onClose={closeForm} onCreated={() => { closeForm(); router.refresh(); }} />
-    <AppointmentDetail appointment={selected} onClose={() => setSelected(null)} onEdit={(a) => { setSelected(null); edit(a); }} />
+    <AppointmentDetail appointment={selected} onClose={() => {
+      setSelected(null);
+      if (props.selectedAppointmentId) router.replace(href({}), { scroll: false });
+    }} onEdit={(a) => { setSelected(null); edit(a); }} />
   </>;
 }
 

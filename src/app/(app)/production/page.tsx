@@ -4,7 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { customerName, vehicleLabel } from "@/lib/customers";
 import { formatDateTime, formatRoNumber } from "@/lib/format";
 import { roStatusVariants } from "@/lib/orders";
-import { daysInProductionStage } from "@/lib/production";
+import { daysInProductionStage, isLateDelivery } from "@/lib/production";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { StageControls } from "@/components/production/stage-controls";
 import { BoardScroller } from "@/components/production/board-scroller";
@@ -42,7 +42,7 @@ export default async function ProductionPage() {
                   {rows.map((order) => {
                     const ro = formatRoNumber(order.ro_number);
                     const days = daysInProductionStage(order.production_stage_at, now);
-                    const late = order.promised_at !== null && Date.parse(order.promised_at) < now.getTime();
+                    const late = isLateDelivery(order.promised_at, now);
                     return <article key={order.id} className="overflow-hidden rounded-card border border-border bg-surface">
                       <Link href={`/orders/${order.id}`} className="block space-y-3 p-4 hover:bg-app-bg focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring">
                         <div className="flex flex-wrap items-center justify-between gap-2">

@@ -39,7 +39,7 @@ export async function proxy(request: NextRequest) {
     return redirect;
   }
   if (user && request.nextUrl.pathname === "/login") {
-    const redirect = NextResponse.redirect(new URL("/", request.url));
+    const redirect = NextResponse.redirect(new URL("/dashboard", request.url));
     response.cookies.getAll().forEach((cookie) => redirect.cookies.set(cookie));
     return redirect;
   }

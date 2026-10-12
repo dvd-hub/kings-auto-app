@@ -2,6 +2,10 @@ import { formatInTimeZone } from "date-fns-tz";
 import { SHOP_TIMEZONE } from "@/lib/config";
 import { orderError } from "@/lib/orders";
 
+export function isLateDelivery(promisedAt: string | null, now: Date): boolean {
+  return promisedAt !== null && Date.parse(promisedAt) < now.getTime();
+}
+
 /** Count shop calendar days, without adding or losing a day at DST changes. */
 export function daysInProductionStage(since: string | null, now: Date): number | null {
   if (!since) return null;

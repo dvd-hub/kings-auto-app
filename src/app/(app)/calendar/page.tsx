@@ -9,7 +9,7 @@ import { CalendarView, type CalendarAppointment, type CalendarViewName } from "@
 const DAY = "yyyy-MM-dd";
 
 export default async function CalendarPage({ searchParams }: {
-  searchParams: Promise<{ view?: string; date?: string; new?: string; customer?: string }>;
+  searchParams: Promise<{ view?: string; date?: string; new?: string; customer?: string; appointment?: string }>;
 }) {
   const params = await searchParams;
   const t = await getT();
@@ -72,6 +72,7 @@ export default async function CalendarPage({ searchParams }: {
     <CalendarView view={view} date={date} today={today} days={days} heading={heading}
       weekdayLabels={days.slice(0, 7).map((d) => fmt(d, { weekday: "short" }))}
       prevDate={format(prev, DAY)} nextDate={format(next, DAY)} appointments={appointments} loadError={Boolean(error)}
-      openNew={params.new === "1"} preselected={preselected} title={t("calendar.title")} />
+      key={`${view}:${date}:${params.appointment ?? ""}:${params.new ?? ""}`}
+      openNew={params.new === "1"} selectedAppointmentId={params.appointment} preselected={preselected} title={t("calendar.title")} />
   </section>;
 }
