@@ -256,6 +256,36 @@ export const invoiceIssueSchema = invoiceCommandSchema.extend({
   notes: z.string().trim().max(2000, "tooLong"),
 });
 export const invoiceVoidSchema = invoiceCommandSchema.extend({ reason: z.string().trim().min(3, "voidReasonRequired").max(2000, "tooLong") });
+
+export const paymentSchema = z.object({
+  orderId: z.uuid(),
+  kind: z.enum(Constants.public.Enums.payment_kind, { message: "required" }),
+  amount_cents: moneyField(100_000_000).pipe(z.number({ message: "required" }).positive("paymentPositive")),
+  paid_at: z.string().trim().transform((value, ctx) => {
+    const date = /^\d{4}-\d{2}-\d{2}$/.test(value) ? fromZonedTime(`${value}T00:00:00`, SHOP_TIMEZONE) : new Date(NaN);
+    if (!Number.isFinite(date.getTime()) || formatInTimeZone(date, SHOP_TIMEZONE, "yyyy-MM-dd") !== value) {
+      ctx.addIssue({ code: "custom", message: "invalidDate" }); return z.NEVER;
+    }
+    if (value > formatInTimeZone(new Date(), SHOP_TIMEZONE, "yyyy-MM-dd")) {
+      ctx.addIssue({ code: "custom", message: "paymentFutureDate" }); return z.NEVER;
+    }
+    return date.toISOString();
+  }),
+  method: z.enum(Constants.public.Enums.payment_method, { message: "required" }),
+  payer: z.enum(Constants.public.Enums.payment_payer, { message: "required" }),
+  payer_name: z.string().trim().max(120, "tooLong"),
+  claim_number: z.string().trim().max(60, "tooLong"),
+  reference: z.string().trim().max(40, "tooLong").refine(v => !/[0-9]{9,}/.test(v.replace(/[\s-]/g, "")), "paymentReference"),
+  notes: z.string().trim().max(1000, "tooLong"),
+  confirmedOverpaymentCents: z.number().int().nonnegative().nullable().default(null),
+}).superRefine((value, ctx) => {
+  if (value.payer === "insurance" && !value.payer_name) ctx.addIssue({ code: "custom", path: ["payer_name"], message: "paymentPayerName" });
+});
+
+export const paymentVoidSchema = z.object({
+  orderId: z.uuid(), paymentId: z.uuid(),
+  reason: z.string().trim().min(3, "voidReasonRequired").max(2000, "tooLong"),
+});
 export const estimateCommandSchema = z.object({ orderId: z.uuid(), estimateId: z.uuid(), command: z.enum(["sent", "draft", "voided"]) });
 export const estimateCreateSchema = z.object({ orderId: z.uuid(), kind: z.enum(["teardown", "repair", "supplement"]), parentEstimateId: z.uuid().optional() }).superRefine((v, ctx) => {
   if ((v.kind === "supplement") !== Boolean(v.parentEstimateId)) ctx.addIssue({ code: "custom", path: ["parentEstimateId"], message: "supplementParentInvalid" });

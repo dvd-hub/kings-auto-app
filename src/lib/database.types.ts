@@ -83,6 +83,13 @@ export type Database = {
             referencedColumns: ["id", "shop_id"]
           },
           {
+            foreignKeyName: "activities_repair_order_id_shop_id_fkey"
+            columns: ["repair_order_id", "shop_id"]
+            isOneToOne: false
+            referencedRelation: "ro_balances"
+            referencedColumns: ["repair_order_id", "shop_id"]
+          },
+          {
             foreignKeyName: "activities_shop_id_fkey"
             columns: ["shop_id"]
             isOneToOne: false
@@ -167,6 +174,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "repair_orders"
             referencedColumns: ["id", "shop_id"]
+          },
+          {
+            foreignKeyName: "appointments_repair_order_id_shop_id_fkey"
+            columns: ["repair_order_id", "shop_id"]
+            isOneToOne: false
+            referencedRelation: "ro_balances"
+            referencedColumns: ["repair_order_id", "shop_id"]
           },
           {
             foreignKeyName: "appointments_shop_id_fkey"
@@ -457,6 +471,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "repair_orders"
             referencedColumns: ["id", "shop_id"]
+          },
+          {
+            foreignKeyName: "documents_repair_order_id_shop_id_fkey"
+            columns: ["repair_order_id", "shop_id"]
+            isOneToOne: false
+            referencedRelation: "ro_balances"
+            referencedColumns: ["repair_order_id", "shop_id"]
           },
           {
             foreignKeyName: "documents_shop_id_fkey"
@@ -813,6 +834,13 @@ export type Database = {
             referencedColumns: ["id", "shop_id"]
           },
           {
+            foreignKeyName: "estimates_repair_order_id_shop_id_fkey"
+            columns: ["repair_order_id", "shop_id"]
+            isOneToOne: false
+            referencedRelation: "ro_balances"
+            referencedColumns: ["repair_order_id", "shop_id"]
+          },
+          {
             foreignKeyName: "estimates_shop_id_fkey"
             columns: ["shop_id"]
             isOneToOne: false
@@ -1059,6 +1087,13 @@ export type Database = {
             referencedColumns: ["id", "shop_id"]
           },
           {
+            foreignKeyName: "invoices_repair_order_id_shop_id_fkey"
+            columns: ["repair_order_id", "shop_id"]
+            isOneToOne: false
+            referencedRelation: "ro_balances"
+            referencedColumns: ["repair_order_id", "shop_id"]
+          },
+          {
             foreignKeyName: "invoices_shop_id_fkey"
             columns: ["shop_id"]
             isOneToOne: false
@@ -1104,6 +1139,100 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "labor_rates_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payments: {
+        Row: {
+          amount_cents: number
+          claim_number: string | null
+          created_at: string
+          created_by: string | null
+          deleted_at: string | null
+          id: string
+          kind: Database["public"]["Enums"]["payment_kind"]
+          method: Database["public"]["Enums"]["payment_method"]
+          notes: string | null
+          paid_at: string
+          payer: Database["public"]["Enums"]["payment_payer"]
+          payer_name: string | null
+          payment_number: number
+          reference: string | null
+          repair_order_id: string
+          shop_id: string
+          status: Database["public"]["Enums"]["payment_status"]
+          updated_at: string
+          void_reason: string | null
+          voided_at: string | null
+          voided_by: string | null
+        }
+        Insert: {
+          amount_cents: number
+          claim_number?: string | null
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          id?: string
+          kind: Database["public"]["Enums"]["payment_kind"]
+          method: Database["public"]["Enums"]["payment_method"]
+          notes?: string | null
+          paid_at: string
+          payer: Database["public"]["Enums"]["payment_payer"]
+          payer_name?: string | null
+          payment_number: number
+          reference?: string | null
+          repair_order_id: string
+          shop_id?: string
+          status?: Database["public"]["Enums"]["payment_status"]
+          updated_at?: string
+          void_reason?: string | null
+          voided_at?: string | null
+          voided_by?: string | null
+        }
+        Update: {
+          amount_cents?: number
+          claim_number?: string | null
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          id?: string
+          kind?: Database["public"]["Enums"]["payment_kind"]
+          method?: Database["public"]["Enums"]["payment_method"]
+          notes?: string | null
+          paid_at?: string
+          payer?: Database["public"]["Enums"]["payment_payer"]
+          payer_name?: string | null
+          payment_number?: number
+          reference?: string | null
+          repair_order_id?: string
+          shop_id?: string
+          status?: Database["public"]["Enums"]["payment_status"]
+          updated_at?: string
+          void_reason?: string | null
+          voided_at?: string | null
+          voided_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payments_repair_order_id_shop_id_fkey"
+            columns: ["repair_order_id", "shop_id"]
+            isOneToOne: false
+            referencedRelation: "repair_orders"
+            referencedColumns: ["id", "shop_id"]
+          },
+          {
+            foreignKeyName: "payments_repair_order_id_shop_id_fkey"
+            columns: ["repair_order_id", "shop_id"]
+            isOneToOne: false
+            referencedRelation: "ro_balances"
+            referencedColumns: ["repair_order_id", "shop_id"]
+          },
+          {
+            foreignKeyName: "payments_shop_id_fkey"
             columns: ["shop_id"]
             isOneToOne: false
             referencedRelation: "shops"
@@ -1392,6 +1521,13 @@ export type Database = {
             referencedColumns: ["id", "shop_id"]
           },
           {
+            foreignKeyName: "ro_phases_repair_order_id_shop_id_fkey"
+            columns: ["repair_order_id", "shop_id"]
+            isOneToOne: false
+            referencedRelation: "ro_balances"
+            referencedColumns: ["repair_order_id", "shop_id"]
+          },
+          {
             foreignKeyName: "ro_phases_shop_id_fkey"
             columns: ["shop_id"]
             isOneToOne: false
@@ -1442,6 +1578,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "repair_orders"
             referencedColumns: ["id", "shop_id"]
+          },
+          {
+            foreignKeyName: "ro_stage_events_repair_order_id_shop_id_fkey"
+            columns: ["repair_order_id", "shop_id"]
+            isOneToOne: false
+            referencedRelation: "ro_balances"
+            referencedColumns: ["repair_order_id", "shop_id"]
           },
           {
             foreignKeyName: "ro_stage_events_shop_id_fkey"
@@ -1804,7 +1947,36 @@ export type Database = {
             referencedColumns: ["id", "shop_id"]
           },
           {
+            foreignKeyName: "estimates_repair_order_id_shop_id_fkey"
+            columns: ["repair_order_id", "shop_id"]
+            isOneToOne: false
+            referencedRelation: "ro_balances"
+            referencedColumns: ["repair_order_id", "shop_id"]
+          },
+          {
             foreignKeyName: "estimates_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ro_balances: {
+        Row: {
+          balance_cents: number | null
+          invoice_id: string | null
+          invoice_total_cents: number | null
+          net_paid_cents: number | null
+          paid_cents: number | null
+          payment_status: string | null
+          refunded_cents: number | null
+          repair_order_id: string | null
+          shop_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "repair_orders_shop_id_fkey"
             columns: ["shop_id"]
             isOneToOne: false
             referencedRelation: "shops"
@@ -1884,6 +2056,22 @@ export type Database = {
         Returns: boolean
       }
       next_number: { Args: { p_kind: string }; Returns: number }
+      record_payment: {
+        Args: {
+          p_amount_cents: number
+          p_claim_number: string
+          p_kind: Database["public"]["Enums"]["payment_kind"]
+          p_method: Database["public"]["Enums"]["payment_method"]
+          p_notes: string
+          p_paid_at: string
+          p_payer: Database["public"]["Enums"]["payment_payer"]
+          p_payer_name: string
+          p_reference: string
+          p_repair_order: string
+        }
+        Returns: string
+      }
+      ro_net_paid: { Args: { p_repair_order: string }; Returns: number }
       search_customers: {
         Args: { q: string }
         Returns: {
@@ -1933,6 +2121,10 @@ export type Database = {
       }
       void_invoice: {
         Args: { p_invoice: string; p_reason: string }
+        Returns: undefined
+      }
+      void_payment: {
+        Args: { p_payment: string; p_reason: string }
         Returns: undefined
       }
       web_intake_attach_photos: {
@@ -2002,6 +2194,16 @@ export type Database = {
       labor_type: "body" | "paint" | "mechanical" | "frame" | "other"
       paint_materials_method: "hourly_rate" | "actual_cost"
       part_condition: "new" | "used" | "rebuilt" | "reconditioned"
+      payment_kind: "payment" | "refund"
+      payment_method:
+        | "cash"
+        | "card"
+        | "check"
+        | "zelle"
+        | "bank_transfer"
+        | "other"
+      payment_payer: "customer" | "insurance" | "other"
+      payment_status: "recorded" | "voided"
       phase_status: "pending" | "in_progress" | "done"
       rate_kind:
         | "body"
@@ -2212,6 +2414,17 @@ export const Constants = {
       labor_type: ["body", "paint", "mechanical", "frame", "other"],
       paint_materials_method: ["hourly_rate", "actual_cost"],
       part_condition: ["new", "used", "rebuilt", "reconditioned"],
+      payment_kind: ["payment", "refund"],
+      payment_method: [
+        "cash",
+        "card",
+        "check",
+        "zelle",
+        "bank_transfer",
+        "other",
+      ],
+      payment_payer: ["customer", "insurance", "other"],
+      payment_status: ["recorded", "voided"],
       phase_status: ["pending", "in_progress", "done"],
       rate_kind: [
         "body",

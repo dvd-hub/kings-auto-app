@@ -16,6 +16,7 @@ import { OrderDocuments } from "@/components/orders/order-documents";
 import { signedDocuments } from "@/lib/documents";
 import type { SignedDocument } from "@/lib/document-shared";
 import { OrderInvoice } from "@/components/orders/order-invoice";
+import { OrderPayments } from "@/components/orders/order-payments";
 
 export default async function OrderPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -42,6 +43,7 @@ export default async function OrderPage({ params }: { params: Promise<{ id: stri
   const deadline = teardown && teardown.reassembly_max_days && authorizations.get(teardown.id)?.decision === "approved" ? reassemblyDeadline(authorizations.get(teardown.id)!.authorized_at, teardown.reassembly_max_days) : null;
   const customer = order.customers;
   const vehicle = order.vehicles;
+  const insuranceEstimate = estimatesResult.data?.find(estimate => estimate.payor_name);
   return <section className="space-y-6">
     <div className="flex flex-wrap items-start justify-between gap-4"><div><h1 className="font-mono">{formatRoNumber(order.ro_number)}</h1><div className="mt-2 flex flex-wrap gap-2"><StatusBadge variant={roStatusVariants[order.status]} label={t(`ro_status.${order.status}`)} />{order.type === "classic" && <StatusBadge variant="neutral" label={t(`ro_type.${order.type}`)} />}</div></div><div className="flex flex-wrap gap-2"><Button asChild variant="outline"><Link href={`/orders/${id}/edit`}>{t("common.edit")}</Link></Button><OrderStatusSelector id={id} status={order.status} /></div></div>
     <div className="grid gap-6 lg:grid-cols-2">
@@ -65,6 +67,7 @@ export default async function OrderPage({ params }: { params: Promise<{ id: stri
       </Link></li>)}</ul>}
     </div>
     <OrderInvoice orderId={id} authorized={Boolean(estimatesResult.data?.some(estimate => estimate.status === "authorized"))} estimatesFailed={Boolean(estimatesResult.error)} />
+    <OrderPayments orderId={id} cancelled={order.status === "cancelled"} payerName={insuranceEstimate?.payor_name ?? ""} claimNumber={insuranceEstimate?.payor_claim_number ?? ""} />
     <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,380px)]">
       <div className="rounded-card border border-border bg-surface p-5 sm:p-6"><h2 className="mb-4">{t("customers.history")}</h2>{activitiesResult.error ? <p role="alert">{t("errors.load")}</p> : !activitiesResult.data?.length ? <p>{t("customers.noHistory")}</p> : <ol className="space-y-4">{activitiesResult.data.map((activity) => <li key={activity.id} className="border-l-2 border-border pl-3"><div className="flex flex-wrap items-center gap-2"><StatusBadge variant={activity.kind === "status_change" ? "info" : "neutral"} label={t(`activityKind.${activity.kind}`)} /><span className="text-sm text-secondary-foreground">{formatDateTime(activity.occurred_at)}</span></div><p className="mt-1 whitespace-pre-wrap break-words">{orderActivityText(activity.body, t)}</p></li>)}</ol>}</div>
       <div className="rounded-card border border-border bg-surface p-5 sm:p-6"><h2 className="mb-4">{t("customers.addEntry")}</h2><OrderActivityForm orderId={id} /></div>

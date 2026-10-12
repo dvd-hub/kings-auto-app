@@ -24,17 +24,18 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
   const order = orderResult.data, invoice = invoiceResult.data;
   if (!order || !invoice) notFound();
   const draft = invoice.status === "draft";
-  const [linesResult, shopResult, authResult] = await Promise.all([
+  const [linesResult, shopResult, authResult, balanceResult] = await Promise.all([
     supabase.from("invoice_lines").select("*").eq("invoice_id", invoice.id).is("deleted_at", null).order("position").order("id"),
     draft ? supabase.from("shops").select("sales_tax_rate").eq("id", invoice.shop_id).is("deleted_at", null).maybeSingle() : Promise.resolve({ data: null, error: null }),
     draft ? supabase.from("authorizations").select("amount_cents,estimates!inner(repair_order_id,status,deleted_at)").eq("estimates.repair_order_id", id).eq("estimates.status", "authorized").is("estimates.deleted_at", null).eq("decision", "approved").is("deleted_at", null) : Promise.resolve({ data: null, error: null }),
+    !draft ? supabase.from("ro_balances").select("*").eq("repair_order_id", id).maybeSingle() : Promise.resolve({ data: null, error: null }),
   ]);
-  if (linesResult.error || shopResult.error || authResult.error || (draft && !shopResult.data)) return <p role="alert">{t("errors.load")}</p>;
+  if (linesResult.error || shopResult.error || authResult.error || balanceResult.error || (draft && !shopResult.data) || (!draft && (!balanceResult.data || balanceResult.data.invoice_id !== invoice.id))) return <p role="alert">{t("errors.load")}</p>;
   const lines = linesResult.data ?? [];
   const rate = draft ? shopResult.data!.sales_tax_rate : invoice.tax_rate!;
   const totals = draft ? draftInvoiceTotals(lines, rate) : issuedInvoiceTotals(invoice);
   const authorized = draft ? (authResult.data ?? []).reduce((sum, auth) => sum + auth.amount_cents, 0) : invoice.authorized_cents!;
-  const summary = <InvoiceSummary totals={totals} rate={rate} authorized={authorized} estimated={draft} />;
+  const summary = <InvoiceSummary totals={totals} rate={rate} authorized={authorized} estimated={draft} balance={balanceResult.data ?? undefined} orderId={id} />;
   const pdfUrl = `/orders/${id}/invoices/${invoice.id}/pdf`;
   return <section className="min-w-0 space-y-6">
     <div className="flex flex-wrap items-start justify-between gap-4"><div><h1>{t("invoices.title")} <span className="font-mono">{invoice.invoice_number === null ? t("invoice_status.draft") : formatInvoiceNumber(invoice.invoice_number)}</span></h1><div className="mt-2"><StatusBadge variant={invoiceStatusVariants[invoice.status]} label={t(`invoice_status.${invoice.status}`)} /></div></div>

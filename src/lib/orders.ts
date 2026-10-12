@@ -1,6 +1,6 @@
 import { fromZonedTime, formatInTimeZone } from "date-fns-tz";
 import { SHOP_TIMEZONE } from "@/lib/config";
-import { formatInvoiceNumber, formatMoney } from "@/lib/format";
+import { formatInvoiceNumber, formatPaymentNumber, formatMoney } from "@/lib/format";
 import type { Database } from "@/lib/database.types";
 import { Constants } from "@/lib/database.types";
 import type { getT } from "@/i18n/server";
@@ -48,7 +48,7 @@ export function orderActivityText(body: string | null, t: Awaited<ReturnType<typ
   if (!body) return "";
   try {
     const event = JSON.parse(body);
-    const key = (["createdActivity", "stageActivity", "statusActivity", "sentActivity", "estimateEmailedActivity", "voidActivity", "draftActivity", "authorizationActivity", "supplementCreatedActivity", "payorNotifiedActivity", "designeeActivity", "teardownActivity", "pickupNotifiedActivity", "appointmentLinkedActivity", "appointmentUnlinkedActivity", "appointmentCreatedActivity", "invoiceIssuedActivity", "invoiceVoidedActivity"] as const).find((key) => key === event?.key);
+    const key = (["createdActivity", "stageActivity", "statusActivity", "sentActivity", "estimateEmailedActivity", "voidActivity", "draftActivity", "authorizationActivity", "supplementCreatedActivity", "payorNotifiedActivity", "designeeActivity", "teardownActivity", "pickupNotifiedActivity", "appointmentLinkedActivity", "appointmentUnlinkedActivity", "appointmentCreatedActivity", "invoiceIssuedActivity", "invoiceVoidedActivity", "paymentRecordedActivity", "refundRecordedActivity", "paymentVoidedActivity"] as const).find((key) => key === event?.key);
     if (event?.module === "orders" && key && event.values && Object.values(event.values).every((v) => typeof v === "string" || typeof v === "number")) {
       const values = { ...event.values };
       const status = Constants.public.Enums.ro_status.find((s) => s === values.status);
@@ -60,6 +60,12 @@ export function orderActivityText(body: string | null, t: Awaited<ReturnType<typ
       if (key === "invoiceIssuedActivity" || key === "invoiceVoidedActivity") {
         values.number = formatInvoiceNumber(Number(values.number));
         if (key === "invoiceIssuedActivity") values.total = formatMoney(Number(values.total));
+      }
+      if (key === "paymentRecordedActivity" || key === "refundRecordedActivity" || key === "paymentVoidedActivity") {
+        values.number = formatPaymentNumber(Number(values.number));
+        values.amount = formatMoney(Number(values.amount));
+        const method = Constants.public.Enums.payment_method.find(m => m === values.method);
+        if (method) values.method = t(`payments.method.${method}`);
       }
       if (key === "authorizationActivity") {
         const decision = (["approved", "declined"] as const).find((d) => d === values.decision);
