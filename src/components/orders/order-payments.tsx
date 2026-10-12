@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { formatDateTime, formatMoney, formatPaymentNumber } from "@/lib/format";
 import { balanceStatus, paymentStatusVariants, type Payment } from "@/lib/payments";
 import { StatusBadge } from "@/components/ui/status-badge";
+import { Button } from "@/components/ui/button";
 import { PaymentButtons, VoidPaymentButton } from "@/components/orders/payment-controls";
 
 export async function OrderPayments({ orderId, cancelled, payerName, claimNumber }: {
@@ -35,6 +36,8 @@ export async function OrderPayments({ orderId, cancelled, payerName, claimNumber
         <caption className="sr-only">{t("payments.title")}</caption><thead className="bg-muted text-secondary-foreground"><tr>{(["number", "date", "kindLabel", "methodLabel", "payerLabel", "reference", "amount", "actions"] as const).map(key => <th scope="col" key={key} className="px-3 py-3 font-semibold">{t(`payments.${key}`)}</th>)}</tr></thead>
         <tbody>{paymentsResult.data.map(payment => {
           const voided = payment.status === "voided";
+          const receiptUrl = `/orders/${orderId}/payments/${payment.id}/receipt`;
+          const number = formatPaymentNumber(payment.payment_number);
           return <tr key={payment.id} className="border-t border-border align-top">
             <td className="min-w-44 px-3 py-3"><p className={`font-mono font-semibold ${voided ? "line-through" : ""}`}>{formatPaymentNumber(payment.payment_number)}</p>{voided && <><StatusBadge variant="neutral" label={t("payments.voided")} /><p className="mt-2 whitespace-pre-wrap break-words text-secondary-foreground">{t("payments.voidReason")}: {payment.void_reason}</p></>}</td>
             <td className={`whitespace-nowrap px-3 py-3 ${voided ? "line-through" : ""}`}>{formatDateTime(payment.paid_at)}</td>
@@ -43,7 +46,11 @@ export async function OrderPayments({ orderId, cancelled, payerName, claimNumber
             <td className={`min-w-36 px-3 py-3 ${voided ? "line-through" : ""}`}><p>{t(`payments.payer.${payment.payer}`)}</p>{payment.payer_name && <p className="break-words text-secondary-foreground">{payment.payer_name}</p>}</td>
             <td className={`max-w-48 break-words px-3 py-3 ${voided ? "line-through" : ""}`}>{payment.reference ?? t("common.none")}</td>
             <td className={`whitespace-nowrap px-3 py-3 font-mono ${voided ? "line-through" : ""}`}>{formatMoney(payment.kind === "refund" ? -payment.amount_cents : payment.amount_cents)}</td>
-            <td className="px-3 py-3">{!voided && <VoidPaymentButton orderId={orderId} payment={payment} />}</td>
+            <td className="px-3 py-3"><div className="flex flex-wrap gap-2">
+              <Button asChild variant="outline"><a href={receiptUrl} target="_blank" rel="noopener noreferrer" aria-label={t("payments.openReceipt", { number })}>{t("payments.receipt")}</a></Button>
+              <Button asChild variant="outline"><a href={`${receiptUrl}?download=1`} aria-label={t("payments.downloadReceipt", { number })}>{t("payments.download")}</a></Button>
+              {!voided && <VoidPaymentButton orderId={orderId} payment={payment} />}
+            </div></td>
           </tr>;
         })}</tbody>
       </table></div>}

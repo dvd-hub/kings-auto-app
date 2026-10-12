@@ -72,6 +72,7 @@
     "emptyDescription": "This section is ready for future workshop workflows."
   },
   "errors": {
+    "receiptPdfFailed": "The receipt PDF could not be generated. Try again.",
     "paymentPositive": "The payment amount must be greater than zero.",
     "paymentFutureDate": "The payment date cannot be in the future.",
     "paymentPayerName": "An insurance payment requires the payer’s name.",
@@ -844,6 +845,10 @@
     "notAvailable": "Not provided"
   },
   "payments": {
+    "receipt": "Receipt",
+    "download": "Download",
+    "openReceipt": "View receipt {number} (opens in a new tab)",
+    "downloadReceipt": "Download receipt {number}",
     "title": "Payments",
     "invoiceTotal": "Invoice total",
     "netPaid": "Paid (net)",

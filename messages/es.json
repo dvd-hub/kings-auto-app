@@ -72,6 +72,7 @@
     "emptyDescription": "Esta sección está preparada para futuras funciones del taller."
   },
   "errors": {
+    "receiptPdfFailed": "No se pudo generar el PDF del recibo. Inténtalo de nuevo.",
     "paymentPositive": "El importe del pago debe ser mayor que cero.",
     "paymentFutureDate": "La fecha del pago no puede ser futura.",
     "paymentPayerName": "Un pago de aseguradora requiere el nombre del pagador.",
@@ -844,6 +845,10 @@
     "notAvailable": "No indicado"
   },
   "payments": {
+    "receipt": "Recibo",
+    "download": "Descargar",
+    "openReceipt": "Ver recibo {number} (abre en una pestaña nueva)",
+    "downloadReceipt": "Descargar recibo {number}",
     "title": "Pagos",
     "invoiceTotal": "Total factura",
     "netPaid": "Pagado (neto)",
