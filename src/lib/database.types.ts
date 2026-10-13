@@ -24,6 +24,7 @@ export type Database = {
           deleted_at: string | null
           id: string
           kind: Database["public"]["Enums"]["activity_kind"]
+          lead_id: string | null
           occurred_at: string
           repair_order_id: string | null
           shop_id: string
@@ -39,6 +40,7 @@ export type Database = {
           deleted_at?: string | null
           id?: string
           kind: Database["public"]["Enums"]["activity_kind"]
+          lead_id?: string | null
           occurred_at?: string
           repair_order_id?: string | null
           shop_id?: string
@@ -54,6 +56,7 @@ export type Database = {
           deleted_at?: string | null
           id?: string
           kind?: Database["public"]["Enums"]["activity_kind"]
+          lead_id?: string | null
           occurred_at?: string
           repair_order_id?: string | null
           shop_id?: string
@@ -73,6 +76,13 @@ export type Database = {
             columns: ["customer_id", "shop_id"]
             isOneToOne: false
             referencedRelation: "customers"
+            referencedColumns: ["id", "shop_id"]
+          },
+          {
+            foreignKeyName: "activities_lead_id_shop_id_fkey"
+            columns: ["lead_id", "shop_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
             referencedColumns: ["id", "shop_id"]
           },
           {
@@ -1146,6 +1156,116 @@ export type Database = {
           },
         ]
       }
+      leads: {
+        Row: {
+          appointment_id: string | null
+          created_at: string
+          created_by: string | null
+          customer_id: string | null
+          deleted_at: string | null
+          id: string
+          lost_note: string | null
+          lost_reason: Database["public"]["Enums"]["lead_lost_reason"] | null
+          next_call_on: string | null
+          repair_order_id: string | null
+          shop_id: string
+          source: Database["public"]["Enums"]["lead_source"]
+          status: Database["public"]["Enums"]["lead_status"]
+          summary: string | null
+          updated_at: string
+          vehicle_id: string | null
+          web_request_id: string | null
+        }
+        Insert: {
+          appointment_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string | null
+          deleted_at?: string | null
+          id?: string
+          lost_note?: string | null
+          lost_reason?: Database["public"]["Enums"]["lead_lost_reason"] | null
+          next_call_on?: string | null
+          repair_order_id?: string | null
+          shop_id?: string
+          source?: Database["public"]["Enums"]["lead_source"]
+          status?: Database["public"]["Enums"]["lead_status"]
+          summary?: string | null
+          updated_at?: string
+          vehicle_id?: string | null
+          web_request_id?: string | null
+        }
+        Update: {
+          appointment_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string | null
+          deleted_at?: string | null
+          id?: string
+          lost_note?: string | null
+          lost_reason?: Database["public"]["Enums"]["lead_lost_reason"] | null
+          next_call_on?: string | null
+          repair_order_id?: string | null
+          shop_id?: string
+          source?: Database["public"]["Enums"]["lead_source"]
+          status?: Database["public"]["Enums"]["lead_status"]
+          summary?: string | null
+          updated_at?: string
+          vehicle_id?: string | null
+          web_request_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "leads_appointment_id_shop_id_fkey"
+            columns: ["appointment_id", "shop_id"]
+            isOneToOne: false
+            referencedRelation: "appointments"
+            referencedColumns: ["id", "shop_id"]
+          },
+          {
+            foreignKeyName: "leads_customer_id_shop_id_fkey"
+            columns: ["customer_id", "shop_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id", "shop_id"]
+          },
+          {
+            foreignKeyName: "leads_repair_order_id_shop_id_fkey"
+            columns: ["repair_order_id", "shop_id"]
+            isOneToOne: false
+            referencedRelation: "repair_orders"
+            referencedColumns: ["id", "shop_id"]
+          },
+          {
+            foreignKeyName: "leads_repair_order_id_shop_id_fkey"
+            columns: ["repair_order_id", "shop_id"]
+            isOneToOne: false
+            referencedRelation: "ro_balances"
+            referencedColumns: ["repair_order_id", "shop_id"]
+          },
+          {
+            foreignKeyName: "leads_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "leads_vehicle_id_shop_id_fkey"
+            columns: ["vehicle_id", "shop_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id", "shop_id"]
+          },
+          {
+            foreignKeyName: "leads_web_request_id_shop_id_fkey"
+            columns: ["web_request_id", "shop_id"]
+            isOneToOne: false
+            referencedRelation: "web_requests"
+            referencedColumns: ["id", "shop_id"]
+          },
+        ]
+      }
       payments: {
         Row: {
           amount_cents: number
@@ -1795,6 +1915,7 @@ export type Database = {
           ip: unknown
           is_insurance_claim: boolean | null
           landing_page: string | null
+          lead_id: string | null
           locale: string
           marketing_opt_in: boolean
           meta_event_id: string
@@ -1834,6 +1955,7 @@ export type Database = {
           ip?: unknown
           is_insurance_claim?: boolean | null
           landing_page?: string | null
+          lead_id?: string | null
           locale: string
           marketing_opt_in?: boolean
           meta_event_id: string
@@ -1873,6 +1995,7 @@ export type Database = {
           ip?: unknown
           is_insurance_claim?: boolean | null
           landing_page?: string | null
+          lead_id?: string | null
           locale?: string
           marketing_opt_in?: boolean
           meta_event_id?: string
@@ -1906,6 +2029,13 @@ export type Database = {
             columns: ["customer_id", "shop_id"]
             isOneToOne: false
             referencedRelation: "customers"
+            referencedColumns: ["id", "shop_id"]
+          },
+          {
+            foreignKeyName: "web_requests_lead_id_shop_id_fkey"
+            columns: ["lead_id", "shop_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
             referencedColumns: ["id", "shop_id"]
           },
           {
@@ -2055,6 +2185,7 @@ export type Database = {
         Args: { p_token_hash: string }
         Returns: boolean
       }
+      mark_lead_spam: { Args: { p_lead_id: string }; Returns: undefined }
       next_number: { Args: { p_kind: string }; Returns: number }
       record_payment: {
         Args: {
@@ -2192,6 +2323,21 @@ export type Database = {
       estimate_status: "draft" | "sent" | "authorized" | "declined" | "voided"
       invoice_status: "draft" | "issued" | "voided"
       labor_type: "body" | "paint" | "mechanical" | "frame" | "other"
+      lead_lost_reason:
+        | "price"
+        | "insurance_other_shop"
+        | "no_response"
+        | "total_loss"
+        | "other"
+      lead_source: "web" | "phone" | "walk_in" | "referral" | "other"
+      lead_status:
+        | "new"
+        | "contacted"
+        | "estimate_appt"
+        | "estimate_sent"
+        | "won"
+        | "lost"
+        | "spam"
       paint_materials_method: "hourly_rate" | "actual_cost"
       part_condition: "new" | "used" | "rebuilt" | "reconditioned"
       payment_kind: "payment" | "refund"
@@ -2412,6 +2558,23 @@ export const Constants = {
       estimate_status: ["draft", "sent", "authorized", "declined", "voided"],
       invoice_status: ["draft", "issued", "voided"],
       labor_type: ["body", "paint", "mechanical", "frame", "other"],
+      lead_lost_reason: [
+        "price",
+        "insurance_other_shop",
+        "no_response",
+        "total_loss",
+        "other",
+      ],
+      lead_source: ["web", "phone", "walk_in", "referral", "other"],
+      lead_status: [
+        "new",
+        "contacted",
+        "estimate_appt",
+        "estimate_sent",
+        "won",
+        "lost",
+        "spam",
+      ],
       paint_materials_method: ["hourly_rate", "actual_cost"],
       part_condition: ["new", "used", "rebuilt", "reconditioned"],
       payment_kind: ["payment", "refund"],
