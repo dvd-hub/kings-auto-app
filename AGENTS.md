@@ -14,6 +14,7 @@ App interna de gestión para Kings Auto Collision Inc., taller de carrocería, p
 - NO hagas commit ni push: lo revisa el dueño del proyecto.
 - Windows con PowerShell: no uses `find`, `grep` ni `cat` de Unix.
 - Antes de dar algo por terminado, pega el OUTPUT LITERAL de: `npx tsc --noEmit`, `npm run lint`, `npm run build`, `git status`, `git diff --stat`. Nunca un resumen en prosa.
+- Todas las salidas deben entregarse juntas en un único bloque de código Markdown para facilitar el copiado. Identifica cada comando dentro del mismo bloque y conserva su output literal; no dividas las salidas en bloques separados.
 - Si algo no existe o no se puede hacer, escribe `NO ENCONTRADO` y explica por qué. No supongas.
 - Haz exactamente lo que pide la tarea. No refactorices ni "mejores" otras partes.
 
