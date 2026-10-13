@@ -1,4 +1,25 @@
 {
+  "leads": {
+    "title": "Leads", "new": "Nuevo lead", "detail": "Lead", "back": "Volver a leads",
+    "customer": "Cliente", "phone": "Teléfono", "email": "Correo electrónico", "name": "Nombre", "vehicle": "Vehículo", "source": "Origen", "state": "Estado", "nextCall": "Próxima llamada", "created": "Creado",
+    "newCount": "{count, plural, =0 {No hay leads nuevos} one {# lead nuevo} other {# leads nuevos}}",
+    "active": "Leads abiertos", "all": "Todos los estados", "toCall": "Por llamar", "filter": "Aplicar filtros", "overdue": "Vencida",
+    "empty": "No hay leads con estos filtros.", "notProvided": "Sin indicar", "noCustomer": "Sin cliente enlazado", "noVehicle": "Sin vehículo enlazado",
+    "pagination": "Páginas de leads", "page": "Página {page} de {pages}", "previous": "Anterior", "next": "Siguiente",
+    "searchCustomer": "Buscar cliente por nombre, teléfono o correo", "chooseCustomer": "Elige o crea un cliente.", "changeCustomer": "Cambiar cliente",
+    "newCustomer": "Nuevo cliente", "createCustomer": "Crear y elegir cliente", "duplicateCustomer": "Ya existe un cliente con estos datos de contacto. Elige su ficha:",
+    "openWarning": "Este cliente ya tiene un lead abierto. Revísalo antes de crear otro.", "openAcknowledge": "He revisado los leads existentes y necesito un lead distinto.",
+    "vehicleOptional": "Vehículo (opcional)", "summary": "¿Qué necesita el cliente?", "nextCallOptional": "Fecha de próxima llamada (opcional)", "create": "Crear lead", "saved": "Lead guardado",
+    "lostReason": "Motivo de pérdida", "lostNote": "Nota de pérdida (opcional)", "chooseReason": "Elige un motivo", "winningOrder": "Orden de reparación", "chooseOrder": "Elige una orden de reparación", "createOrder": "Crear orden",
+    "clearCall": "Quitar fecha de llamada", "appointment": "Cita", "existingAppointment": "Cita existente del cliente", "noAppointment": "Sin cita enlazada", "linkAppointment": "Guardar enlace de cita", "viewAppointment": "Ver en calendario", "newEstimateAppointment": "Crear cita de presupuesto",
+    "markSpam": "Marcar como spam", "spamTitle": "¿Marcar este lead como spam?", "spamConfirmation": "El lead se marcará como spam. El cliente también se archivará si no tiene citas ni órdenes de reparación.", "spamReadOnly": "Este lead está marcado como spam. Su historial se conserva.",
+    "history": "Historial del lead", "noHistory": "Todavía no hay historial.", "entryType": "Tipo de entrada", "entryBody": "Nota o detalle de la llamada", "addEntry": "Añadir entrada", "entrySaved": "Entrada guardada en el historial",
+    "received": "Creado el {date}", "archivedCustomer": "Cliente archivado", "customerEmpty": "Este cliente no tiene leads.",
+    "createdActivity": "Lead creado", "statusActivity": "Estado del lead cambiado de {from} a {to}", "callDateActivity": "Próxima llamada fijada para el {date}", "callDateRemovedActivity": "Fecha de próxima llamada eliminada", "appointmentActivity": "Cita enlazada al lead", "appointmentRemovedActivity": "Enlace de cita eliminado",
+    "status": { "new": "Nuevo", "contacted": "Contactado", "estimate_appt": "Cita de presupuesto", "estimate_sent": "Presupuesto enviado", "won": "Ganado", "lost": "Perdido", "spam": "Spam" },
+    "sources": { "web": "Web", "phone": "Teléfono", "walk_in": "En persona", "referral": "Referido", "other": "Otro" },
+    "reasons": { "price": "Precio", "insurance_other_shop": "Aseguradora / otro taller", "no_response": "Sin respuesta", "total_loss": "Pérdida total", "other": "Otro" }
+  },
   "common": {
     "brand": "Kings Auto Collision",
     "logoAlt": "King's Auto Collisions",
@@ -47,6 +68,7 @@
     "backToLogin": "Volver al inicio de sesión"
   },
   "navigation": {
+    "leads": "Leads",
     "home": "Inicio",
     "customers": "Clientes",
     "orders": "Órdenes de reparación",
@@ -105,6 +127,12 @@
     "openProduction": "Ver producción"
   },
   "errors": {
+    "duplicateLeadRecord": "Este registro de lead ya existe.",
+    "leadLostReason": "Los datos de pérdida solo se pueden guardar en un lead perdido.",
+    "leadAlreadyOpen": "Este cliente tiene un lead abierto. Revísalo y confirma que necesitas otro distinto.",
+    "leadChanged": "Este lead ha cambiado desde que lo abriste. Recarga y revisa los datos actuales antes de guardar.",
+    "leadOrderCustomer": "Elige una orden de reparación del cliente de este lead.",
+    "leadAppointmentLinkSave": "La cita se creó, pero no se pudo enlazar al lead. Elígela entre las citas existentes; no la vuelvas a crear.",
     "receiptPdfFailed": "No se pudo generar el PDF del recibo. Inténtalo de nuevo.",
     "paymentPositive": "El importe del pago debe ser mayor que cero.",
     "paymentFutureDate": "La fecha del pago no puede ser futura.",

@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/compone
 import { Field, Select, Textarea, fieldAria } from "@/components/form-field";
 import { CustomerSearch } from "@/components/customer-search";
 import { createAppointment, updateAppointment } from "@/app/(app)/calendar/actions";
+import { createLeadEstimateAppointment } from "@/app/(app)/leads/actions";
 import { createClient } from "@/lib/supabase/client";
 import { Constants, type Database } from "@/lib/database.types";
 import { customerName, vehicleLabel } from "@/lib/customers";
@@ -19,6 +20,8 @@ type AppointmentType = Database["public"]["Enums"]["appointment_type"];
 export type AppointmentDraft = {
   date: string; time: string; customer: { id: string; name: string } | null;
   repairOrderId?: string; vehicleId?: string;
+  lead?: { id: string; updated_at: string };
+  vehicles?: { id: string; label: string }[];
   /** Present when editing an existing appointment. */
   existing?: { id: string; type: AppointmentType; duration: number; vehicleId: string | null; title: string | null; notes: string | null };
 };
@@ -45,7 +48,7 @@ function FormBody({ draft, onClose, onCreated }: { draft: AppointmentDraft; onCl
   const [time, setTime] = useState(draft.time);
   const [duration, setDuration] = useState(String(draft.existing?.duration ?? APPOINTMENT_DURATIONS.estimate));
   const [customer, setCustomer] = useState(draft.customer);
-  const [vehicles, setVehicles] = useState<{ id: string; label: string }[]>([]);
+  const [vehicles, setVehicles] = useState<{ id: string; label: string }[]>(draft.vehicles ?? []);
   const [vehicleId, setVehicleId] = useState(draft.existing?.vehicleId ?? draft.vehicleId ?? "");
   const [title, setTitle] = useState(draft.existing?.title ?? "");
   const [notes, setNotes] = useState(draft.existing?.notes ?? "");
@@ -54,6 +57,7 @@ function FormBody({ draft, onClose, onCreated }: { draft: AppointmentDraft; onCl
   const existing = draft.existing;
 
   useEffect(() => {
+    if (draft.vehicles) return;
     if (!customer) return;
     let cancelled = false;
     createClient().from("vehicles").select("id, year, make, model, trim, plate").eq("customer_id", customer.id).is("deleted_at", null).order("created_at")
@@ -61,7 +65,7 @@ function FormBody({ draft, onClose, onCreated }: { draft: AppointmentDraft; onCl
         if (!cancelled) setVehicles((data ?? []).map((v) => ({ id: v.id, label: [vehicleLabel(v), v.plate].filter(Boolean).join(" · ") || v.id })));
       });
     return () => { cancelled = true; };
-  }, [customer]);
+  }, [customer, draft.vehicles]);
 
   function changeType(next: AppointmentType) {
     setType(next);
@@ -72,7 +76,8 @@ function FormBody({ draft, onClose, onCreated }: { draft: AppointmentDraft; onCl
     event.preventDefault();
     start(async () => {
       const values = { repair_order_id: draft.repairOrderId, type, date, time, duration, customer_id: customer?.id ?? null, vehicle_id: customer && vehicleId ? vehicleId : null, title, notes };
-      const result = existing ? await updateAppointment(existing.id, values) : await createAppointment(values);
+      const result = existing ? await updateAppointment(existing.id, values) : draft.lead
+        ? await createLeadEstimateAppointment({ ...draft.lead, appointment: values }) : await createAppointment(values);
       if (!result.ok) {
         setErrors(result.fieldErrors ?? {});
         if (result.error) toast.error(e(result.error));
@@ -90,7 +95,7 @@ function FormBody({ draft, onClose, onCreated }: { draft: AppointmentDraft; onCl
     <form noValidate onSubmit={submit} className="space-y-4 text-[15px]">
       <Field id="type" label={t("type")} error={errors.type}>
         <Select {...fieldAria("type", errors.type)} value={type} onChange={(event) => changeType(event.target.value as AppointmentType)}>
-          {Constants.public.Enums.appointment_type.map((v) => <option key={v} value={v}>{ty(v)}</option>)}
+          {(draft.lead ? ["estimate" as const] : Constants.public.Enums.appointment_type).map((v) => <option key={v} value={v}>{ty(v)}</option>)}
         </Select>
       </Field>
       <div className="grid gap-4 sm:grid-cols-3">
@@ -106,7 +111,7 @@ function FormBody({ draft, onClose, onCreated }: { draft: AppointmentDraft; onCl
         {customer
           ? <div className="flex min-h-11 items-center justify-between gap-2 rounded-control border border-input bg-input-bg pl-3">
             <span id="customer_id" className="font-semibold">{customer.name}</span>
-            <Button type="button" variant="ghost" disabled={Boolean(draft.repairOrderId)} className="min-w-11 px-2" aria-label={t("clearCustomer")}
+            <Button type="button" variant="ghost" disabled={Boolean(draft.repairOrderId || draft.lead)} className="min-w-11 px-2" aria-label={t("clearCustomer")}
               onClick={() => { setCustomer(null); setVehicleId(""); setVehicles([]); }}><X className="size-5" /></Button>
           </div>
           : <CustomerSearch label={t("customer")} placeholder={t("searchCustomer")} onSelect={(option) => { setVehicleId(""); setCustomer({ id: option.id, name: customerName(option) }); }} />}

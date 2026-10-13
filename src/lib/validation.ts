@@ -9,10 +9,10 @@ import { parseMoneyToCents } from "@/lib/format";
 /** Error messages are keys of the "validation" namespace in messages/*.json. */
 export type FieldErrors = Record<string, string>;
 
-export function fieldErrors(error: z.ZodError): FieldErrors {
+export function fieldErrors(error: z.ZodError, nestedField?: string): FieldErrors {
   const out: FieldErrors = {};
   for (const issue of error.issues) {
-    const key = String(issue.path[0] ?? "form");
+    const key = String(issue.path[nestedField && issue.path[0] === nestedField ? 1 : 0] ?? "form");
     if (!out[key]) out[key] = issue.message;
   }
   return out;
@@ -60,6 +60,39 @@ export const customerSchema = z.object({
   if (!c.phone && !c.email) ctx.addIssue({ code: "custom", path: ["phone"], message: "contactRequired" });
 });
 export type CustomerInput = z.input<typeof customerSchema>;
+
+const leadDate = z.string().trim().transform((value, ctx) => {
+  if (!value) return null;
+  const date = /^\d{4}-\d{2}-\d{2}$/.test(value) ? fromZonedTime(`${value}T12:00:00`, SHOP_TIMEZONE) : new Date(NaN);
+  if (!Number.isFinite(date.getTime()) || formatInTimeZone(date, SHOP_TIMEZONE, "yyyy-MM-dd") !== value) {
+    ctx.addIssue({ code: "custom", message: "invalidDate" }); return z.NEVER;
+  }
+  return value;
+});
+export const leadCustomerSchema = z.object({
+  name: z.string().trim().min(1, "nameRequired").max(200, "tooLong"), phone, email,
+  source: z.enum(["phone", "walk_in", "referral", "other"]),
+}).superRefine((v, ctx) => {
+  if (!v.phone && !v.email) ctx.addIssue({ code: "custom", path: ["phone"], message: "contactRequired" });
+});
+export const leadCreateSchema = z.object({
+  customer_id: z.uuid({ message: "required" }), vehicle_id: z.uuid().nullable(),
+  summary: z.string().trim().min(1, "required").max(5000, "tooLong"),
+  source: z.enum(["phone", "walk_in", "referral", "other"], { message: "required" }),
+  next_call_on: leadDate, open_leads_ack: z.boolean().default(false),
+});
+export const leadCommandSchema = z.object({ id: z.uuid(), updated_at: z.iso.datetime({ offset: true }) });
+export const leadStatusSchema = leadCommandSchema.extend({
+  status: z.enum(["new", "contacted", "estimate_appt", "estimate_sent", "won", "lost"]),
+  lost_reason: z.union([z.enum(Constants.public.Enums.lead_lost_reason), z.literal("")]),
+  lost_note: z.string().trim().max(2000, "tooLong"), repair_order_id: z.uuid().nullable(),
+}).superRefine((v, ctx) => {
+  if (v.status === "lost" && !v.lost_reason) ctx.addIssue({ code: "custom", path: ["lost_reason"], message: "required" });
+  if (v.status === "won" && !v.repair_order_id) ctx.addIssue({ code: "custom", path: ["repair_order_id"], message: "required" });
+});
+export const leadCallDateSchema = leadCommandSchema.extend({ next_call_on: leadDate });
+export const leadAppointmentSchema = leadCommandSchema.extend({ appointment_id: z.uuid().nullable() });
+export const leadActivitySchema = z.object({ id: z.uuid(), kind: z.enum(["note", "call"]), body: z.string().trim().min(1, "required").max(5000, "tooLong") });
 
 const optionalInt = (min: number, max: number) => z.string().trim().transform((value, ctx) => {
   if (value === "") return null;
@@ -111,6 +144,10 @@ export const appointmentSchema = z.object({
   notes: optionalText,
 });
 export type AppointmentInput = z.input<typeof appointmentSchema>;
+
+export const leadEstimateAppointmentSchema = leadCommandSchema.extend({ appointment: appointmentSchema }).superRefine((v, ctx) => {
+  if (v.appointment.type !== "estimate") ctx.addIssue({ code: "custom", path: ["type"], message: "required" });
+});
 
 const orderInteger = (required = false, min = 0) => z.string().trim().transform((value, ctx) => {
   if (value === "" && !required) return null;

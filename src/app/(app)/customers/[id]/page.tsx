@@ -13,6 +13,8 @@ import { appointmentStatusVariant, appointmentTypeVariant } from "@/lib/appointm
 import { formatDateTime, formatMiles, formatPhone } from "@/lib/format";
 import { formatRoNumber } from "@/lib/format";
 import { roStatusVariants, orderActivityText } from "@/lib/orders";
+import { leadActivityText } from "@/lib/leads";
+import { CustomerLeads } from "@/components/leads/customer-leads";
 
 export default async function CustomerPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -74,6 +76,7 @@ export default async function CustomerPage({ params }: { params: Promise<{ id: s
 
     <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_380px]">
       <div className="space-y-6">
+        <CustomerLeads customerId={customer.id} />
         <div className="rounded-card border border-border bg-surface p-6">
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
             <h2>{t("customers.repairOrders")}</h2>
@@ -127,7 +130,7 @@ export default async function CustomerPage({ params }: { params: Promise<{ id: s
                   <StatusBadge variant={a.kind === "system" ? "neutral" : "info"} label={t(`activityKind.${a.kind}`)} />
                   <span className="text-sm text-secondary-foreground">{formatDateTime(a.occurred_at)}</span>
                 </div>
-                {a.body && <p className="mt-1 whitespace-pre-wrap break-words">{orderActivityText(a.body, t)}</p>}
+                {a.body && <p className="mt-1 whitespace-pre-wrap break-words">{leadActivityText(orderActivityText(a.body, t), t)}</p>}
               </li>)}
             </ol>}
         </div>

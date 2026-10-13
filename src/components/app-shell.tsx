@@ -12,13 +12,13 @@ import { CustomerSearch } from "@/components/customer-search";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle, SheetClose } from "@/components/ui/sheet";
 import { createClient } from "@/lib/supabase/client";
 
-const links: ReadonlyArray<{ href: string; key: "home" | "customers" | "orders" | "production" | "calendar" | "crm" | "classics" | "billing" | "settings"; icon: LucideIcon }> = [
+const links: ReadonlyArray<{ href: string; key: "home" | "customers" | "orders" | "production" | "calendar" | "leads" | "classics" | "billing" | "settings"; icon: LucideIcon }> = [
   { href: "/dashboard", key: "home", icon: LayoutDashboard },
   { href: "/customers", key: "customers", icon: Users },
-  { href: "/orders", key: "orders", icon: ClipboardList },
   { href: "/production", key: "production", icon: Columns3 },
   { href: "/calendar", key: "calendar", icon: CalendarDays },
-  { href: "/crm", key: "crm", icon: Filter },
+  { href: "/leads", key: "leads", icon: Filter },
+  { href: "/orders", key: "orders", icon: ClipboardList },
   { href: "/classics", key: "classics", icon: Car },
   { href: "/billing", key: "billing", icon: Receipt },
   { href: "/settings", key: "settings", icon: Settings },

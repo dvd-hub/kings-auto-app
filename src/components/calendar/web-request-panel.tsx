@@ -37,7 +37,11 @@ export function WebRequestPanel({ appointmentId }: { appointmentId: string }) {
   if (!result.ok) return <section aria-label={t("title")} className="border-t pt-4"><p role="alert" className="text-status-danger-text">{t("error")}</p></section>;
   if (!result.data) return <section aria-label={t("title")} className="border-t pt-4"><p>{t("notFound")}</p></section>;
 
-  const request = result.data;
+  return <WebRequestContent request={result.data} />;
+}
+
+export function WebRequestContent({ request }: { request: WebRequestDetail }) {
+  const t = useTranslations("webRequest");
   const origin = [
     ["utmSource", request.utm_source], ["utmMedium", request.utm_medium], ["utmCampaign", request.utm_campaign],
     ["landingPage", request.landing_page], ["referrer", request.referrer],

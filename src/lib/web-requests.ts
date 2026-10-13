@@ -17,10 +17,18 @@ export type WebRequestDetail = Pick<WebRequestRow,
 };
 
 export async function getWebRequestDetail(appointmentId: string): Promise<WebRequestDetail | null> {
+  return readWebRequest("appointment_id", appointmentId);
+}
+
+export async function getLeadWebRequestDetail(leadId: string): Promise<WebRequestDetail | null> {
+  return readWebRequest("lead_id", leadId);
+}
+
+async function readWebRequest(column: "appointment_id" | "lead_id", id: string): Promise<WebRequestDetail | null> {
   const supabase = await createClient();
   const { data: request, error } = await supabase.from("web_requests")
     .select("id, status, created_at, locale, service, damage_description, needs_tow, is_insurance_claim, insurer_name, claim_number, preferred_date, preferred_window, marketing_opt_in, utm_source, utm_medium, utm_campaign, fbclid, landing_page, referrer")
-    .eq("appointment_id", appointmentId).is("deleted_at", null)
+    .eq(column, id).is("deleted_at", null)
     .order("created_at", { ascending: false }).limit(1).maybeSingle();
   if (error) throw error;
   if (!request) return null;

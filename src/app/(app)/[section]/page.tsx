@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { EmptySection } from "@/components/empty-section";
 
-const sections = ["crm", "classics", "settings"] as const;
+const sections = ["classics", "settings"] as const;
 
 export default async function SectionPage({ params }: { params: Promise<{ section: string }> }) {
   const { section } = await params;
